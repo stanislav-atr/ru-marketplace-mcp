@@ -66,6 +66,10 @@ size) with counts. Discovery runs in the operator's Chrome over CDP.
   rather than retrying the same call.
 - `dom_fallback` in warnings means the page shipped without its state: items
   still carry sku, title and price, but no brand, colour, sizes or photos.
+- Product pages can slow past the navigation timeout after a burst of card
+  loads (seen 2026-09-24, cleared within minutes). `transport_down` from
+  `lamoda_card` is retryable: wait a minute, and open cards for finalists
+  only — `lamoda_images` reuses search data and loads no product pages.
 - Lamoda publishes a review rating only on the product page (`rating`, 1-5,
   with `reviews_count`); search results carry none.
 - An empty search with a detected visible challenge returns `challenge_required`;

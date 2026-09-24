@@ -277,6 +277,28 @@ async def test_detail_falls_back_to_graphql_and_says_detail_is_missing(monkeypat
     assert "detail_unavailable: product page blocked, price and sizes only" in card.meta.warnings
 
 
+async def test_a_page_navigation_timeout_is_transport_down_and_hands_over(monkeypatch):
+    """Captured live 2026-09-24: Page.goto timed out and, unconverted, skipped the
+    GraphQL fallback and surfaced as a generic failure."""
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def slow_page(url, wait_ms):
+        raise TimeoutError("Page.goto: Timeout 20000ms exceeded.")
+        yield
+
+    async def graphql(sku, ctx):
+        return {"sku": sku, "name": "Бомбер", "brand_name": "Lyle & Scott", "price_amount": 15999, "sizes": []}
+
+    monkeypatch.setattr(server, "open_page", slow_page)
+    monkeypatch.setattr(server, "_graphql_card", graphql)
+    with pytest.raises(ToolError) as exc:
+        await server._cdp_card("RTLAFO975401", None)
+    assert _code(exc) == "transport_down"
+    card = await server.lamoda_card("RTLAFO975401", detail=True)
+    assert card.tier_used == "graphql" and "page_tier_unavailable" in card.meta.warnings
+
+
 def test_other_colours_take_the_sku_from_the_gallery_when_absent():
     fields = catalog.card_fields(
         {

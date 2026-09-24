@@ -707,6 +707,12 @@ async def _cdp_card(sku: str, ctx: Context | None) -> dict[str, Any]:
         if exc.status == 404:
             raise_tool_error(NotFoundError(f"Lamoda has no product page for {sku}."))
         raise_tool_error(TransportDownError(f"Lamoda navigation blocked (HTTP {exc.status})."))
+    except ToolError:
+        raise
+    except Exception as exc:
+        # A navigation timeout or a dropped CDP socket is a blocked tier, and
+        # must read as one so lamoda_card can hand over to GraphQL.
+        raise_tool_error(TransportDownError(_redact(f"product page unreachable: {type(exc).__name__}: {exc}")[:300]))
     if data.get("_no_state"):
         if _CHALLENGE_TEXT_RE.search(str(data.get("body_snippet") or "")):
             raise_tool_error(
