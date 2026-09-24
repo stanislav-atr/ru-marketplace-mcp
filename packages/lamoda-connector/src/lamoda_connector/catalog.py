@@ -113,6 +113,97 @@ _COLOR_ALIASES: dict[str, str] = {
 _STEM_ALIASES: dict[str, str] = {"оливков": "хаки", "темно-син": "синий", "темносин": "синий", "кремов": "молочный"}
 _ADJ_ENDING = re.compile(r"(ый|ий|ой|ая|яя|ое|ее|ые|ие)$")
 
+# Other filter vocabularies, keyed by Lamoda's own titles (read from the facets
+# of men's outerwear 2026-09-24; keys are the same on every catalogue page).
+# A name missing here still resolves through the page's own facet.
+MATERIAL_IDS: dict[str, str] = {
+    "акрил": "1",
+    "альпака": "68",
+    "вискоза": "2",
+    "искусственная замша": "4",
+    "искусственная кожа": "5",
+    "кашемир": "56",
+    "лайкра": "7",
+    "лен": "8",
+    "натуральная замша": "11",
+    "натуральная кожа": "12",
+    "полиамид": "15",
+    "полимер": "35",
+    "полиэстер": "16",
+    "пух и перо": "57",
+    "текстиль": "17",
+    "хлопок": "19",
+    "шелк": "20",
+    "шерсть": "21",
+}
+PATTERN_IDS: dict[str, str] = {
+    "геометрия": "18577",
+    "горох": "6190",
+    "гусиная лапка": "42616",
+    "другое": "6191",
+    "животные": "6188",
+    "камуфляж": "6189",
+    "клетка": "6193",
+    "леопардовый": "18580",
+    "однотонный": "18579",
+    "полоска": "6192",
+    "рисунки и надписи": "30869",
+    "цветочный": "6187",
+}
+STYLE_IDS: dict[str, str] = {"вечерний": "5924", "деловой": "5926", "повседневный": "5922", "спортивный": "5925"}
+SEASON_IDS: dict[str, str] = {"демисезон": "5595", "зима": "5593", "лето": "5594", "мульти": "5592"}
+
+_VOCAB_ALIASES: dict[str, str] = {
+    # materials
+    "cotton": "хлопок",
+    "linen": "лен",
+    "wool": "шерсть",
+    "silk": "шелк",
+    "cashmere": "кашемир",
+    "viscose": "вискоза",
+    "polyester": "полиэстер",
+    "polyamide": "полиамид",
+    "nylon": "полиамид",
+    "leather": "натуральная кожа",
+    "кожа": "натуральная кожа",
+    "suede": "натуральная замша",
+    "замша": "натуральная замша",
+    "down": "пух и перо",
+    # patterns
+    "solid": "однотонный",
+    "plain": "однотонный",
+    "check": "клетка",
+    "plaid": "клетка",
+    "stripe": "полоска",
+    "striped": "полоска",
+    "camo": "камуфляж",
+    "floral": "цветочный",
+    "print": "рисунки и надписи",
+    # styles
+    "casual": "повседневный",
+    "business": "деловой",
+    "formal": "деловой",
+    "sport": "спортивный",
+    "evening": "вечерний",
+    # seasons (the site shows демисезон as "весна / осень", мульти as "любой сезон")
+    "весна / осень": "демисезон",
+    "весна": "демисезон",
+    "осень": "демисезон",
+    "spring": "демисезон",
+    "autumn": "демисезон",
+    "fall": "демисезон",
+    "demi-season": "демисезон",
+    "winter": "зима",
+    "summer": "лето",
+    "любой сезон": "мульти",
+    "all-season": "мульти",
+    "any": "мульти",
+}
+
+# Price bounds are one ``price=min,max`` parameter; an open end is not
+# understood (``price=5000,`` filtered like ``0,5000``), so both are always sent.
+PRICE_CEILING = 10_000_000
+
 _ID_RE = re.compile(r"^\d{1,7}$")
 _SIZE_RE = re.compile(r"^[0-9A-Za-z][0-9A-Za-z/.\-]{0,11}$")
 _IMAGE_PATH_RE = re.compile(r"^/[A-Z0-9]/[A-Z0-9]/[A-Za-z0-9_]{6,80}\.(?:jpg|jpeg|png|webp)$")
@@ -149,6 +240,25 @@ def resolve_color(raw: str) -> tuple[str, str] | None:
     return None
 
 
+def resolve_vocab(raw: str, table: dict[str, str]) -> tuple[str, str] | None:
+    """Map a name, alias or numeric ID to ``(id, lamoda_title)`` in one vocabulary.
+
+    ``None`` means "not in the built-in table": the caller resolves it through
+    the page's own facet instead.
+    """
+    word = raw.strip().lower().replace("ё", "е")
+    if _ID_RE.match(word):
+        return word, next((t for t, i in table.items() if i == word), word)
+    title = _VOCAB_ALIASES.get(word, word)
+    if title in table:
+        return table[title], title
+    stem = _stem(word)
+    for title, key in table.items():
+        if _stem(title) == stem:
+            return key, title
+    return None
+
+
 def valid_size(raw: str) -> str | None:
     """A size filter value as Lamoda keys it ("48", "M", "44/46"), or None."""
     value = raw.strip()
@@ -168,13 +278,20 @@ def build_search_url(
     sizes: list[str] | None = None,
     sort: str | None = None,
     page: int = 1,
+    category_id: str | None = None,
+    facet_ids: dict[str, list[str]] | None = None,
+    price: tuple[int | None, int | None] = (None, None),
+    sale_only: bool = False,
 ) -> str:
     """Build the catalog URL. Every filter value must already be validated.
 
     Values reach the URL only through ``urlencode``; commas are kept literal
     because that is how Lamoda's own filter links join several values.
+    A category is a path (``/c/<id>/<slug>/``; any slug works) and already
+    belongs to one gender, so it replaces the gender path. ``facet_ids`` maps
+    Lamoda's facet names (``base_materials``, ``print``...) to IDs.
     """
-    path = GENDER_PATHS.get(gender or "", SEARCH_PATH)
+    path = f"/c/{category_id}/catalog/" if category_id else GENDER_PATHS.get(gender or "", SEARCH_PATH)
     params: list[tuple[str, str]] = [("q", query)]
     if color_ids:
         params.append(("colors", ",".join(color_ids)))
@@ -182,6 +299,13 @@ def build_search_url(
         params.append(("brands", ",".join(brand_ids)))
     if sizes:
         params.append(("size_values", ",".join(sizes)))
+    for name, ids in (facet_ids or {}).items():
+        if ids:
+            params.append((name, ",".join(ids)))
+    if price != (None, None):
+        params.append(("price", f"{price[0] or 0},{price[1] or PRICE_CEILING}"))
+    if sale_only:
+        params.append(("is_sale", "true"))
     if sort and sort != "default":
         params.append(("sort", sort))
     if page > 1:
@@ -229,10 +353,35 @@ SEARCH_STATE_JS = r"""
     sizes: Array.isArray(p.sizes) ? p.sizes.map(s => [s.size || null, s.brand_size || null, s.is_available]) : [],
   }));
   const pg = pl.pagination || {};
+  // Checked facet values, so the caller can tell a filter Lamoda applied from
+  // one it silently ignored (unknown parameters are dropped without a word).
+  const selected = {};
+  for (const f of pl.facets || []) {
+    const vals = f && f.list_value && Array.isArray(f.list_value.values) ? f.list_value.values : [];
+    const on = vals.filter(v => v && v.checked).map(v => String(v.key));
+    if (on.length) selected[f.name] = on;
+  }
+  // The category tree is expanded only along the current path: flatten it
+  // with levels so the caller can offer the next level down.
+  const categories = [];
+  const walk = (nodes) => (nodes || []).forEach(n => {
+    const i = n && n.info;
+    if (!i) return;
+    categories.push([String(i.id), i.title, i.found, i.level]);
+    walk(n.nodes);
+  });
+  walk(pl.category_tree);
   return JSON.stringify({
     products,
     pagination: {page: pg.page, pages: pg.pages, found: pg.found},
-    facets: {colors: facet('colors'), sizes: facet('size_values'), brands: facet('brands')},
+    facets: {
+      colors: facet('colors'), sizes: facet('size_values'), brands: facet('brands'),
+      materials: facet('base_materials'), patterns: facet('print'),
+      styles: facet('property_style'), seasons: facet('property_season_wear'),
+    },
+    selected,
+    category: pl.category && pl.category.id != null ? String(pl.category.id) : null,
+    categories,
   });
 }
 """
@@ -368,8 +517,35 @@ def facet_values(raw: Any) -> list[tuple[str, str, int | None]]:
     return out
 
 
+def category_values(raw: Any) -> list[tuple[str, str, int | None, int | None]]:
+    out: list[tuple[str, str, int | None, int | None]] = []
+    for entry in raw if isinstance(raw, list) else []:
+        if isinstance(entry, list) and len(entry) == 4 and entry[0] is not None:
+            out.append((str(entry[0]), str(entry[1] or entry[0]), R.coerce_int(entry[2]), R.coerce_int(entry[3])))
+    return out
+
+
+def subcategories(
+    tree: list[tuple[str, str, int | None, int | None]], current: str | None
+) -> list[tuple[str, str, int | None]]:
+    """The level below the current category (the tree roots without one)."""
+    levels = {key: level for key, _, _, level in tree}
+    base = levels.get(current) if current is not None else None
+    if current is not None and base is not None:
+        start = [key for key, *_ in tree].index(current)
+        below: list[tuple[str, str, int | None]] = []
+        for key, title, found, level in tree[start + 1 :]:
+            if level is None or level <= base:
+                break
+            if level == base + 1:
+                below.append((key, title, found))
+        return below
+    top = min((level for *_, level in tree if level is not None), default=None)
+    return [(key, title, found) for key, title, found, level in tree if level == top]
+
+
 def resolve_brands(names: list[str], brand_facet: list[tuple[str, str, int | None]]) -> tuple[list[str], list[str]]:
-    """Map brand names to filter IDs through the page's own brand facet.
+    """Map names to filter IDs through one of the page's own facets (brands, materials...).
 
     Exact case-insensitive title match first, then a unique prefix match.
     Returns ``(ids, unresolved_names)``.

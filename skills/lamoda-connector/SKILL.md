@@ -17,11 +17,14 @@ size) with counts. Discovery runs in the operator's Chrome over CDP.
 - Turn a capsule request into a shortlist the operator can put in the cart
 
 ## Tools available
-- `lamoda_search(query, gender?, colors?, brands?, sizes?, sort?, page?, limit?)`
+- `lamoda_search(query, gender?, category?, colors?, brands?, sizes?, materials?,
+  patterns?, styles?, seasons?, price_min?, price_max?, sale_only?, sort?, page?, limit?)`
   — filtered search. Items carry sku, title, brand, color, price_rub,
   old_price_rub, loyalty_price_rub, sizes_in_stock, image_url, url; the
-  response carries total_found, pages and `facets` (colours, sizes, top
-  brands, with counts) to refine by.
+  response carries total_found, pages and `facets` (subcategories, colours,
+  sizes, top brands, materials, prints, styles, seasons, with counts) to
+  refine by. A filter Lamoda did not apply is a `filter_not_applied: <name>`
+  warning — treat those results as unfiltered on that axis.
 - `lamoda_images(skus, photos_per_item?, size?, layout?)` — up to 12 products'
   photos, by default as one grid image whose tiles are labelled `#n SKU`; the
   JSON index maps `n` to brand, title and colour. `layout="separate"` sends one
@@ -48,6 +51,12 @@ size) with counts. Discovery runs in the operator's Chrome over CDP.
    Olive has no family of its own — Lamoda files it under хаки. Several colours
    in one call are OR-ed. Lamoda names garments loosely (a Harrington may be a
    "Бомбер", "Ветровка" or "Куртка-рубашка"), so query the family, not the style.
+   Put the brief's other hard constraints into filters too, not the query:
+   `materials=["хлопок"]`, `patterns=["однотонный"]`, `price_max=15000`,
+   `seasons=["демисезон"]`. `category` keeps a word like "куртка" from pulling
+   in other garments: pass a title ("Верхняя одежда") or an ID from
+   `facets.categories`, which lists the next level down. Styles and seasons
+   appear only once a category is set.
 3. **Look before choosing**: pass the 8-12 most plausible SKUs to
    `lamoda_images`. Discard what does not match the style; the colour label is
    a family, and the photo decides the shade.

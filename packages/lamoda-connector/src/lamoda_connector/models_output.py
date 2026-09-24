@@ -57,10 +57,17 @@ class LamodaFacetOut(BaseModel):
     count: int | None = Field(default=None, description="Matching products for the current query and filters.")
 
 
-class LamodaFacetsOut(BaseModel):
+class LamodaFacetsOut(_OmitEmpty):
+    categories: list[LamodaFacetOut] = Field(
+        default_factory=list, description="Next category level down; pass an id as `category` to narrow."
+    )
     colors: list[LamodaFacetOut] = Field(default_factory=list, description="Colour families present in the results.")
     sizes: list[LamodaFacetOut] = Field(default_factory=list, description="Sizes present in the results.")
     brands: list[LamodaFacetOut] = Field(default_factory=list, description="Most frequent brands (top 15).")
+    materials: list[LamodaFacetOut] = Field(default_factory=list, description="Main materials in the results.")
+    patterns: list[LamodaFacetOut] = Field(default_factory=list, description="Prints in the results.")
+    styles: list[LamodaFacetOut] = Field(default_factory=list, description="Styles (category pages only).")
+    seasons: list[LamodaFacetOut] = Field(default_factory=list, description="Seasons (category pages only).")
 
 
 class LamodaSearchResponse(BaseModel):

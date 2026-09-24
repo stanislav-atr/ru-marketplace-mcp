@@ -451,19 +451,40 @@ def _remember(sku: str, **fields: Any) -> None:
         _seen.popitem(last=False)
 
 
-def _facets_out(facets: dict[str, Any]) -> LamodaFacetsOut:
+def _facets_out(state: dict[str, Any]) -> LamodaFacetsOut:
+    raw_facets = state.get("facets")
+    facets: dict[str, Any] = raw_facets if isinstance(raw_facets, dict) else {}
+
     def to_out(entries: list[tuple[str, str, int | None]]) -> list[LamodaFacetOut]:
         return [LamodaFacetOut(id=key, title=title, count=count) for key, title, count in entries]
 
     brands = sorted(catalog.facet_values(facets.get("brands")), key=lambda e: -(e[2] or 0))[:15]
     return LamodaFacetsOut(
+        categories=to_out(
+            catalog.subcategories(catalog.category_values(state.get("categories")), state.get("category"))
+        ),
         colors=to_out(catalog.facet_values(facets.get("colors"))),
         sizes=[
             LamodaFacetOut(id=key, title=key, count=count)
             for key, _, count in catalog.facet_values(facets.get("sizes"))
         ],
         brands=to_out(brands),
+        materials=to_out(catalog.facet_values(facets.get("materials"))),
+        patterns=to_out(catalog.facet_values(facets.get("patterns"))),
+        styles=to_out(catalog.facet_values(facets.get("styles"))),
+        seasons=to_out(catalog.facet_values(facets.get("seasons"))),
     )
+
+
+# Search inputs backed by one Lamoda facet: (input name, facet key in the state
+# reader, URL/checked-state name, built-in vocabulary or None for page-only).
+_FACET_INPUTS: tuple[tuple[str, str, str, dict[str, str] | None], ...] = (
+    ("brands", "brands", "brands", None),
+    ("materials", "materials", "base_materials", catalog.MATERIAL_IDS),
+    ("patterns", "patterns", "print", catalog.PATTERN_IDS),
+    ("styles", "styles", "property_style", catalog.STYLE_IDS),
+    ("seasons", "seasons", "property_season_wear", catalog.SEASON_IDS),
+)
 
 
 def _clean_list(values: list[str] | None, limit: int, what: str) -> list[str]:
@@ -471,6 +492,37 @@ def _clean_list(values: list[str] | None, limit: int, what: str) -> list[str]:
     if len(cleaned) > limit:
         raise_tool_error(BadRequestError(f"at most {limit} {what} per search; got {len(cleaned)}"))
     return cleaned
+
+
+def _unapplied_filters(
+    state: dict[str, Any],
+    color_ids: list[str],
+    sizes: list[str],
+    facet_ids: dict[str, list[str]],
+    category_id: str | None,
+    price_min: int | None,
+    price_max: int | None,
+) -> list[str]:
+    """Filters the rendered page shows no sign of: Lamoda drops unknown ones silently."""
+    selected = state.get("selected")
+    out: list[str] = []
+    if isinstance(selected, dict):
+        wanted = [("colors", "colors", color_ids), ("sizes", "size_values", sizes)]
+        wanted += [(name, url_name, facet_ids[name]) for name, _, url_name, _ in _FACET_INPUTS]
+        for label, url_name, ids in wanted:
+            on = selected.get(url_name)
+            if ids and not (isinstance(on, list) and set(ids) & {str(v) for v in on}):
+                out.append(f"filter_not_applied: {label}")
+    if category_id and state.get("category") is not None and str(state.get("category")) != category_id:
+        out.append("filter_not_applied: category")
+    if price_min is not None or price_max is not None:
+        low, high = price_min or 0, price_max or catalog.PRICE_CEILING
+        for product in state.get("products") or []:
+            current = catalog.split_prices(product.get("price_amount"), product.get("prices"))[0]
+            if current is not None and not low <= current <= high:
+                out.append("filter_not_applied: price")
+                break
+    return out
 
 
 @mcp.tool(
@@ -506,6 +558,37 @@ async def lamoda_search(
             max_length=6,
         ),
     ] = None,
+    category: Annotated[
+        str | None,
+        Field(
+            description="Lamoda category ID or title ('Верхняя одежда', 'Рубашки'); scopes to that subtree and "
+            "its gender. facets.categories lists the next level down with IDs.",
+            max_length=80,
+        ),
+    ] = None,
+    materials: Annotated[
+        list[str] | None,
+        Field(description="Main material: 'хлопок', 'лен', 'шерсть', English or IDs; OR-ed.", max_length=6),
+    ] = None,
+    patterns: Annotated[
+        list[str] | None,
+        Field(description="Print: 'однотонный', 'клетка', 'полоска', English or IDs; OR-ed.", max_length=6),
+    ] = None,
+    styles: Annotated[
+        list[str] | None,
+        Field(description="Style: 'повседневный', 'деловой', 'спортивный', 'вечерний'.", max_length=4),
+    ] = None,
+    seasons: Annotated[
+        list[str] | None,
+        Field(description="Season: 'демисезон' (spring/autumn), 'зима', 'лето', 'мульти'.", max_length=4),
+    ] = None,
+    price_min: Annotated[
+        int | None, Field(ge=0, le=catalog.PRICE_CEILING, description="Current price from, ₽.")
+    ] = None,
+    price_max: Annotated[
+        int | None, Field(ge=1, le=catalog.PRICE_CEILING, description="Current price up to, ₽.")
+    ] = None,
+    sale_only: Annotated[bool, Field(description="Only discounted items.")] = False,
     sort: Annotated[
         Literal["default", "new", "price_asc", "price_desc", "discount"], Field(description="Result order.")
     ] = "default",
@@ -524,12 +607,16 @@ async def lamoda_search(
     ## Return Format
 
     LamodaSearchResponse: {status, query, tier_used, count, total_found, page,
-    pages, filters_applied, facets{colors,sizes,brands}, items[], meta}. Items:
+    pages, filters_applied, facets{categories,colors,sizes,brands,materials,
+    patterns,styles,seasons}, items[], meta}. Items:
     sku, title, brand, color, price_rub (everyday; None when absent — never 0),
     old_price_rub, loyalty_price_rub (Lamoda Club only), in_stock,
     sizes_in_stock, image_url, url. `facets` lists refinements with counts.
 
     ## Error Format
+
+    Every filter is checked against the rendered page; one Lamoda ignored is
+    reported as a `filter_not_applied: <name>` warning, never assumed.
 
     ToolError: bad_request for an unknown colour or malformed size;
     challenge_required on a visible challenge (not cached); transport_down on
@@ -559,43 +646,96 @@ async def lamoda_search(
             if value is None:
                 raise_tool_error(BadRequestError(f"size {raw!r} is not a size label; use values like '48' or 'M'"))
             size_values.append(value)
-        brand_inputs = _clean_list(brands, 8, "brands")
-        brand_ids = [b for b in brand_inputs if catalog.is_filter_id(b)]
-        brand_names = [b for b in brand_inputs if not catalog.is_filter_id(b)]
-        unresolved: list[str] = []
+        if price_min is not None and price_max is not None and price_min > price_max:
+            raise_tool_error(BadRequestError(f"price_min {price_min} is above price_max {price_max}"))
+        inputs = {"brands": brands, "materials": materials, "patterns": patterns, "styles": styles, "seasons": seasons}
+        facet_ids: dict[str, list[str]] = {}
+        facet_titles: dict[str, list[str]] = {}
+        pending: dict[str, list[str]] = {}
+        for name, _, _, table in _FACET_INPUTS:
+            facet_ids[name], facet_titles[name], pending[name] = [], [], []
+            for raw in _clean_list(inputs[name], 8, name):
+                hit = (
+                    catalog.resolve_vocab(raw, table)
+                    if table is not None
+                    else ((raw, raw) if catalog.is_filter_id(raw) else None)
+                )
+                if hit is None:
+                    pending[name].append(raw)
+                elif hit[0] not in facet_ids[name]:
+                    facet_ids[name].append(hit[0])
+                    facet_titles[name].append(hit[1])
+        category_id: str | None = None
+        category_title: str | None = None
+        category_name = (category or "").strip() or None
+        if category_name and catalog.is_filter_id(category_name):
+            category_id, category_name = category_name, None
         text = query.strip()
+        price = (price_min, price_max)
 
-        def url_for(ids: list[str]) -> str:
+        def url_for(ids: dict[str, list[str]], cat: str | None) -> str:
             return catalog.build_search_url(
                 text,
                 gender=gender,
                 color_ids=color_ids,
-                brand_ids=ids,
+                brand_ids=ids["brands"],
                 sizes=size_values,
                 sort=sort,
                 page=page,
+                category_id=cat,
+                facet_ids={url_name: ids[name] for name, _, url_name, _ in _FACET_INPUTS if name != "brands"},
+                price=price,
+                sale_only=sale_only,
             )
 
         try:
-            if brand_names:
-                # Brand IDs live only in the page's own facet: read it from the
-                # same query without the brand filter, then ask again with IDs.
-                probe = await _cdp_render_search(text, ctx, url=url_for(brand_ids))
+            if category_name or any(pending.values()):
+                # Names outside the built-in vocabularies (every brand, a rare
+                # material, a category title) resolve through the page's own
+                # facets: read them from the same search without those filters,
+                # then ask again with IDs.
+                probe = await _cdp_render_search(text, ctx, url=url_for(facet_ids, category_id))
                 raw_state = probe.get("state")
                 probe_state: dict[str, Any] = raw_state if isinstance(raw_state, dict) else {}
-                resolved_ids, unresolved = catalog.resolve_brands(
-                    brand_names, catalog.facet_values((probe_state.get("facets") or {}).get("brands"))
-                )
-                if unresolved:
-                    warnings.append(f"brands_not_in_results: {', '.join(unresolved)}")
-                brand_ids = brand_ids + resolved_ids
-                if not brand_ids:
-                    raise_tool_error(
-                        NotFoundError(
-                            f"none of the brands {', '.join(brand_names)} appear for this query and filters on Lamoda"
+                raw_facets = probe_state.get("facets")
+                probe_facets: dict[str, Any] = raw_facets if isinstance(raw_facets, dict) else {}
+                for name, facet_key, _, _ in _FACET_INPUTS:
+                    if not pending[name]:
+                        continue
+                    vocab = catalog.facet_values(probe_facets.get(facet_key))
+                    resolved_ids, unresolved = catalog.resolve_brands(pending[name], vocab)
+                    titles = {key: title for key, title, _ in vocab}
+                    for key in resolved_ids:
+                        if key not in facet_ids[name]:
+                            facet_ids[name].append(key)
+                            facet_titles[name].append(titles.get(key, key) if name != "brands" else key)
+                    if name == "brands":
+                        # Brands echo the caller's own spelling, as before.
+                        facet_titles[name] = [b for b in _clean_list(brands, 8, "brands") if b not in unresolved]
+                    if unresolved:
+                        warnings.append(f"{name}_not_in_results: {', '.join(unresolved)}")
+                    if not facet_ids[name]:
+                        raise_tool_error(
+                            NotFoundError(
+                                f"none of the {name} {', '.join(pending[name])} appear for this query and filters on Lamoda"
+                            )
                         )
-                    )
-            url = url_for(brand_ids)
+                if category_name:
+                    tree = [
+                        (key, title, found)
+                        for key, title, found, _ in catalog.category_values(probe_state.get("categories"))
+                    ]
+                    resolved_ids, _ = catalog.resolve_brands([category_name], tree)
+                    if not resolved_ids:
+                        raise_tool_error(
+                            NotFoundError(
+                                f"no category {category_name!r} on this search page; pass an ID from facets.categories"
+                                + ("" if gender else " or set gender")
+                            )
+                        )
+                    category_id = resolved_ids[0]
+                    category_title = next((t for k, t, _ in tree if k == category_id), category_name)
+            url = url_for(facet_ids, category_id)
             payload = await _cdp_render_search(text, ctx, url=url)
         except NavBlocked as exc:
             raise_tool_error(TransportDownError(f"Lamoda navigation blocked (HTTP {exc.status})."))
@@ -614,14 +754,25 @@ async def lamoda_search(
             applied["gender"] = gender
         if color_titles:
             applied["colors"] = color_titles
-        if brand_ids:
-            applied["brands"] = [b for b in brand_inputs if b not in unresolved]
+        if category_id:
+            applied["category"] = category_title or category_id
+        for name, *_ in _FACET_INPUTS:
+            if facet_ids[name]:
+                applied[name] = facet_titles[name]
         if size_values:
             applied["sizes"] = size_values
+        if price != (None, None):
+            applied["price"] = f"{price_min or 0}–{price_max or '∞'}"
+        if sale_only:
+            applied["sale_only"] = "true"
         if sort != "default":
             applied["sort"] = sort
 
         state = payload.get("state") if isinstance(payload.get("state"), dict) else None
+        if state is not None:
+            warnings.extend(
+                _unapplied_filters(state, color_ids, size_values, facet_ids, category_id, price_min, price_max)
+            )
         products = [p for p in (state or {}).get("products") or [] if isinstance(p, dict) and p.get("sku")]
         if state is not None and not products:
             # The state answered and says: nothing matches. With filters that is
@@ -659,7 +810,7 @@ async def lamoda_search(
                 page=R.coerce_int(pagination.get("page")) or page,
                 pages=R.coerce_int(pagination.get("pages")),
                 filters_applied=applied,
-                facets=_facets_out(state.get("facets") or {}) if isinstance(state, dict) else None,
+                facets=_facets_out(state) if isinstance(state, dict) else None,
                 items=items,
             )
         else:

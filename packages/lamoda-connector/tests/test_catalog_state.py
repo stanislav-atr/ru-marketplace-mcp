@@ -17,6 +17,8 @@ from mcp.types import ImageContent, TextContent
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 SEARCH_STATE = json.loads((FIXTURES / "search_state_live.json").read_text(encoding="utf-8"))
 CARD_STATE = json.loads((FIXTURES / "card_state_live.json").read_text(encoding="utf-8"))
+# Men's outerwear 'ветровка', colour 643 + material 19 + price 3000-15000 applied.
+FILTERED_STATE = json.loads((FIXTURES / "search_state_filtered_live.json").read_text(encoding="utf-8"))
 
 
 @pytest.fixture(autouse=True)
@@ -79,6 +81,44 @@ def test_the_url_carries_gender_path_and_comma_joined_filters():
     )
     assert url.startswith("https://www.lamoda.ru/c/4152/default-men/?q=%D0%B1")
     assert "&colors=3847,637&brands=18717&size_values=48,50&sort=new&page=2" in url
+
+
+def test_a_category_replaces_the_gender_path_and_price_always_has_both_bounds():
+    url = catalog.build_search_url(
+        "ветровка",
+        gender="men",
+        category_id="8846",
+        facet_ids={"base_materials": ["19", "8"], "print": ["18579"], "property_style": []},
+        price=(None, 15000),
+        sale_only=True,
+    )
+    assert url.startswith("https://www.lamoda.ru/c/8846/catalog/?q=")
+    assert url.endswith("&base_materials=19,8&print=18579&price=0,15000&is_sale=true")
+    assert "price=3000,10000000" in catalog.build_search_url("x", price=(3000, None))
+
+
+@pytest.mark.parametrize(
+    ("raw", "table", "expected"),
+    [
+        ("Хлопок", catalog.MATERIAL_IDS, ("19", "хлопок")),
+        ("cotton", catalog.MATERIAL_IDS, ("19", "хлопок")),
+        ("лён", catalog.MATERIAL_IDS, ("8", "лен")),
+        ("21", catalog.MATERIAL_IDS, ("21", "шерсть")),
+        ("однотонная", catalog.PATTERN_IDS, ("18579", "однотонный")),
+        ("plaid", catalog.PATTERN_IDS, ("6193", "клетка")),
+        ("весна / осень", catalog.SEASON_IDS, ("5595", "демисезон")),
+        ("casual", catalog.STYLE_IDS, ("5922", "повседневный")),
+        ("флис", catalog.MATERIAL_IDS, None),
+    ],
+)
+def test_filter_names_resolve_from_russian_forms_english_and_ids(raw, table, expected):
+    assert catalog.resolve_vocab(raw, table) == expected
+
+
+def test_the_category_facet_offers_the_level_below_the_current_one():
+    tree = catalog.category_values(FILTERED_STATE["categories"])
+    assert catalog.subcategories(tree, "479") == [("8846", "Куртки и пуховики", 41)]
+    assert [key for key, *_ in catalog.subcategories(tree, None)] == ["4152"]
 
 
 def test_default_sort_and_first_page_stay_out_of_the_url():
@@ -205,6 +245,54 @@ async def test_no_matching_brand_is_not_found_not_an_unfiltered_search(monkeypat
         await server.lamoda_search("бомбер", brands=["No Such Brand"])
     assert _code(exc) == "not_found"
     assert len(urls) == 1
+
+
+async def test_filters_the_page_shows_as_checked_raise_no_warning(monkeypatch):
+    urls: list = []
+    _patch_render(monkeypatch, FILTERED_STATE, urls)
+    result = await server.lamoda_search(
+        "ветровка", category="479", colors=["navy"], materials=["cotton"], price_min=3000, price_max=15000
+    )
+    assert len(urls) == 1
+    assert not [w for w in result.meta.warnings if w.startswith("filter_not_applied")]
+    assert result.filters_applied["materials"] == ["хлопок"]
+    assert result.filters_applied["price"] == "3000–15000"
+    assert [(c.id, c.title) for c in result.facets.categories] == [("8846", "Куртки и пуховики")]
+    assert {m.title for m in result.facets.materials} >= {"Хлопок"}
+
+
+async def test_a_filter_lamoda_ignored_is_reported_not_assumed(monkeypatch):
+    _patch_render(monkeypatch, FILTERED_STATE, [])
+    result = await server.lamoda_search("ветровка", category="8846", patterns=["клетка"], price_max=5000)
+    assert "filter_not_applied: patterns" in result.meta.warnings
+    assert "filter_not_applied: category" in result.meta.warnings
+    assert "filter_not_applied: price" in result.meta.warnings
+
+
+async def test_a_category_title_resolves_through_the_page_tree_then_filters(monkeypatch):
+    urls: list = []
+    _patch_render(monkeypatch, FILTERED_STATE, urls)
+    result = await server.lamoda_search("ветровка", gender="men", category="верхняя одежда")
+    assert urls[0].startswith("https://www.lamoda.ru/c/4152/default-men/")
+    assert urls[1].startswith("https://www.lamoda.ru/c/479/catalog/")
+    assert result.filters_applied["category"] == "Верхняя одежда"
+
+
+async def test_an_unknown_category_or_material_is_not_found_not_an_unfiltered_search(monkeypatch):
+    urls: list = []
+    _patch_render(monkeypatch, FILTERED_STATE, urls)
+    for kwargs in ({"category": "Носки"}, {"materials": ["флис"]}):
+        with pytest.raises(ToolError) as exc:
+            await server.lamoda_search("ветровка", **kwargs)
+        assert _code(exc) == "not_found"
+    assert len(urls) == 2
+
+
+async def test_an_inverted_price_range_is_a_bad_request(monkeypatch):
+    _patch_render(monkeypatch, FILTERED_STATE, [])
+    with pytest.raises(ToolError) as exc:
+        await server.lamoda_search("ветровка", price_min=9000, price_max=3000)
+    assert _code(exc) == "bad_request"
 
 
 async def test_a_state_with_no_products_is_an_empty_result_not_drift(monkeypatch):

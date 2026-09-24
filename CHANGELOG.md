@@ -20,6 +20,14 @@
   ("navy", "синяя", "оливковые" → хаки); an unknown colour is `bad_request`,
   never silently dropped. Brand names resolve through the page's brand facet.
   The DOM tiles remain the fallback, flagged `dom_fallback`.
+- `lamoda_search` also filters by `category` (ID or title; the response lists
+  the next level down in `facets.categories`), `materials`, `patterns`,
+  `styles`, `seasons`, `price_min`/`price_max` and `sale_only`, with the
+  matching facets in the response. Common names resolve from built-in
+  vocabularies (Russian, English, IDs); anything else resolves through the
+  page's own facet. Every filter is checked against the rendered page:
+  Lamoda drops unknown parameters silently, so one it ignored is a
+  `filter_not_applied: <name>` warning.
 - `lamoda_images` returns up to 12 products' photos as MCP images, each
   labelled with SKU, brand and colour, so a vision-capable model can judge
   style — the step that titles alone cannot do.
@@ -57,6 +65,12 @@
   `in_stock_only` no longer excludes every Lamoda offer as unknown.
 
 ### Fixed
+
+- Chrome 153 refuses Playwright's CDP attach with a protocol error instead of
+  hanging; that now falls back to raw CDP like the Chrome 151 timeout did,
+  rather than failing every browser-tier call.
+- Raw-CDP navigation ignores documents loaded in iframes: an ad tracker's
+  frame on lamoda.ru became the page URL and failed the host check.
 
 - Wildberries reads `card.wb.ru`, `search.wb.ru` and `catalog.wb.ru` through
   browser impersonation. Those three answer the default client's TLS handshake

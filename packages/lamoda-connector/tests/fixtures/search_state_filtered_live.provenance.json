@@ -1,0 +1,9 @@
+{
+  "url": "https://www.lamoda.ru/c/479/catalog/?q=%D0%B2%D0%B5%D1%82%D1%80%D0%BE%D0%B2%D0%BA%D0%B0&colors=643&base_materials=19&price=3000,15000",
+  "captured_at": "2026-09-24",
+  "sha256": "e280b46b481570c603b222c23d7b41b799ade2d166096f5de3324a5238c0068d",
+  "method": "output of catalog.SEARCH_STATE_JS evaluated in the operator's Chrome over CDP on the live men's outerwear search 'ветровка' with colour, material and price filters; trimmed to the first 6 products and the first 25 brand facet values, everything else verbatim",
+  "ground_truth": {
+    "note": "41 found; selected shows colors 643 (синий) and base_materials 19 (хлопок) checked; category 479 (Верхняя одежда) with one child 8846 (Куртки и пуховики); every product price within 3000-15000"
+  }
+}
