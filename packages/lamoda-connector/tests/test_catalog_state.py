@@ -299,6 +299,48 @@ async def test_a_page_navigation_timeout_is_transport_down_and_hands_over(monkey
     assert card.tier_used == "graphql" and "page_tier_unavailable" in card.meta.warnings
 
 
+async def test_parallel_cards_queue_for_chrome_without_timing_out(monkeypatch):
+    """Captured live 2026-09-24: six parallel detail cards, the later ones timed
+    out while waiting for the Chrome lock, before ever navigating."""
+    import asyncio
+    from contextlib import asynccontextmanager
+
+    class Page:
+        def __init__(self, sku):
+            self.sku = sku
+
+        async def evaluate(self, expression):
+            return json.dumps({**CARD_STATE, "sku": self.sku})
+
+    @asynccontextmanager
+    async def page_taking_a_while(url, wait_ms):
+        await asyncio.sleep(0.05)
+        yield Page(url.rstrip("/").rsplit("/", 1)[-1].upper())
+
+    monkeypatch.setattr(server, "open_page", page_taking_a_while)
+    monkeypatch.setattr(server, "TIMEOUT", 0.12)  # each page fits; the queue of five does not
+    skus = [f"RTLAEJ66990{i}" for i in range(5)]
+    states = await asyncio.gather(*(server._cdp_card(sku, None) for sku in skus))
+    assert [s["sku"] for s in states] == skus
+
+
+async def test_when_every_tier_fails_each_reason_is_reported(monkeypatch):
+    async def page_timeout(sku, ctx):
+        server.raise_tool_error(server.TransportDownError("product page unreachable: TimeoutError"))
+
+    async def graphql_403(sku, ctx):
+        server.raise_tool_error(server.TransportDownError("Lamoda GraphQL answered HTTP 403."))
+
+    monkeypatch.setattr(server, "_cdp_card", page_timeout)
+    monkeypatch.setattr(server, "_graphql_card", graphql_403)
+    with pytest.raises(ToolError) as exc:
+        await server.lamoda_card("RTLAEJ669901", detail=True)
+    message = json.loads(str(exc.value))["message"]
+    assert _code(exc) == "transport_down"
+    assert "page: product page unreachable: TimeoutError" in message
+    assert "graphql: Lamoda GraphQL answered HTTP 403." in message
+
+
 def test_other_colours_take_the_sku_from_the_gallery_when_absent():
     fields = catalog.card_fields(
         {

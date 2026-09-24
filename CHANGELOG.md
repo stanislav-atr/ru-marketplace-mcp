@@ -41,6 +41,10 @@
   healthy when either tier answers, probing the page with a SKU the live
   search just returned. A GraphQL parser drift is now reported as drift; the
   old check read the exception class name and could never see it.
+- Lamoda's Chrome time budget covers the page work only: waiting for the
+  shared browser lock and the pacer no longer counts, so parallel
+  `lamoda_card` calls queue instead of timing out before they navigate.
+  When every card tier fails, the error names each tier's reason.
 - `compare_prices` receives Lamoda's stock status and brand, so
   `in_stock_only` no longer excludes every Lamoda offer as unknown.
 

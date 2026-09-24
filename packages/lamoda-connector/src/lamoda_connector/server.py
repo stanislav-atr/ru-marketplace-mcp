@@ -391,32 +391,35 @@ async def _cdp_render_search(query: str, ctx: Context | None, url: str | None = 
             data["state"] = state if isinstance(state, dict) and isinstance(state.get("products"), list) else None
             return data
 
-        async with _cdp_lock:
-            await _polite_wait()
-            if scope is None:
-                async with open_page(url, wait_ms=8000) as page:
-                    return await read(page)
-            note: dict = {}
-            data, expires_at = await read_with_handoff(
-                url=url,
-                wait_ms=8000,
-                scope=scope,
-                operation="lamoda_search",
-                read=read,
-                challenge=lambda payload: "captcha" if _anti_bot_challenge(payload) else None,
-                note_out=note,
-            )
-            if note.get("resumed"):
-                # R3: a resumed read states what changed (challenge cleared, data
-                # moved) rather than making the caller diff two payloads.
-                data["_resume"] = note
-            if expires_at:
-                data["_handoff_expires_at"] = expires_at
-                data["_handoff_id"] = get_handoff_id(scope=scope, operation="lamoda_search", url=url)
-            return data
+        if scope is None:
+            async with open_page(url, wait_ms=8000) as page:
+                return await read(page)
+        note: dict = {}
+        data, expires_at = await read_with_handoff(
+            url=url,
+            wait_ms=8000,
+            scope=scope,
+            operation="lamoda_search",
+            read=read,
+            challenge=lambda payload: "captcha" if _anti_bot_challenge(payload) else None,
+            note_out=note,
+        )
+        if note.get("resumed"):
+            # R3: a resumed read states what changed (challenge cleared, data
+            # moved) rather than making the caller diff two payloads.
+            data["_resume"] = note
+        if expires_at:
+            data["_handoff_expires_at"] = expires_at
+            data["_handoff_id"] = get_handoff_id(scope=scope, operation="lamoda_search", url=url)
+        return data
 
     try:
-        payload = await asyncio.wait_for(_attempt(), timeout=max(0.01, float(TIMEOUT)))
+        # The timeout covers the browser work only. Waiting for the lock and
+        # the pacer is queueing, not a slow page: timing it made the later of
+        # several parallel calls fail before they ever navigated (2026-09-24).
+        async with _cdp_lock:
+            await _polite_wait()
+            payload = await asyncio.wait_for(_attempt(), timeout=max(0.01, float(TIMEOUT)))
     except TimeoutError:
         raise_tool_error(TransportDownError(f"CDP timeout after {TIMEOUT}s"))
     if not _anti_bot_challenge(payload):
@@ -687,20 +690,21 @@ async def _cdp_card(sku: str, ctx: Context | None) -> dict[str, Any]:
     url = catalog.product_url(sku)
 
     async def _attempt() -> Any:
-        async with _cdp_lock:
-            await _polite_wait()
-            async with open_page(url, wait_ms=6000) as page:
-                state = await _read_state(page, catalog.CARD_STATE_JS)
-                if isinstance(state, dict):
-                    return state
-                body = await asyncio.wait_for(
-                    page.evaluate("() => (document.body && document.body.innerText || '').slice(0, 2000)"),
-                    timeout=10.0,
-                )
-                return {"_no_state": True, "body_snippet": body if isinstance(body, str) else ""}
+        async with open_page(url, wait_ms=6000) as page:
+            state = await _read_state(page, catalog.CARD_STATE_JS)
+            if isinstance(state, dict):
+                return state
+            body = await asyncio.wait_for(
+                page.evaluate("() => (document.body && document.body.innerText || '').slice(0, 2000)"),
+                timeout=10.0,
+            )
+            return {"_no_state": True, "body_snippet": body if isinstance(body, str) else ""}
 
     try:
-        data = await asyncio.wait_for(_attempt(), timeout=max(0.01, float(TIMEOUT)))
+        # Queueing for the lock is not part of the page's time budget.
+        async with _cdp_lock:
+            await _polite_wait()
+            data = await asyncio.wait_for(_attempt(), timeout=max(0.01, float(TIMEOUT)))
     except TimeoutError:
         raise_tool_error(TransportDownError(f"CDP timeout after {TIMEOUT}s"))
     except NavBlocked as exc:
@@ -777,7 +781,7 @@ async def lamoda_card(
             )
         warnings: list[str] = []
         order = ("page", "graphql") if detail else ("graphql", "page")
-        last_exc: ToolError | None = None
+        failures: list[tuple[str, ToolError]] = []
         for tier in order:
             try:
                 if tier == "page":
@@ -816,12 +820,18 @@ async def lamoda_card(
                 # Only a blocked tier hands over; not_found and drift are answers.
                 if "transport_down" not in str(exc) and "challenge_required" not in str(exc):
                     raise
-                last_exc = exc
+                failures.append((tier, exc))
                 warnings.append(f"{tier}_tier_unavailable")
                 log_event("lamoda_card.tier_failed", tier=tier, error=_redact(str(exc))[:160])
         else:
-            assert last_exc is not None
-            raise last_exc
+            # Every tier failed. A challenge needs the operator, so it wins;
+            # otherwise say why each tier failed — the last one alone hid a
+            # page timeout behind GraphQL's standing 403.
+            for _tier, failure in failures:
+                if "challenge_required" in str(failure):
+                    raise failure
+            reasons = "; ".join(f"{name}: {_tool_error_message(err)}" for name, err in failures)
+            raise_tool_error(TransportDownError(f"every card tier failed — {reasons}"[:600]))
         if detail and result.tier_used == "graphql":
             warnings.append("detail_unavailable: product page blocked, price and sizes only")
         attached = R.attach_meta(result.model_dump(by_alias=True, exclude={"meta"}), warnings, source="lamoda_card")
@@ -832,6 +842,14 @@ async def lamoda_card(
     except Exception as exc:
         log_event("lamoda_card.error", error=_redact(str(exc)), exc_type=type(exc).__name__)
         raise_tool_error(TransportDownError(_redact(f"lamoda_card failed: {exc}")))
+
+
+def _tool_error_message(exc: ToolError) -> str:
+    """The human message inside a ToolError's JSON payload, trimmed."""
+    try:
+        return str(json.loads(str(exc)).get("message", ""))[:200]
+    except (json.JSONDecodeError, AttributeError):
+        return str(exc)[:200]
 
 
 _IMAGE_MAX_BYTES = 400_000
