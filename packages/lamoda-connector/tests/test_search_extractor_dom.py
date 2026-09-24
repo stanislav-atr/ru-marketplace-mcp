@@ -159,7 +159,7 @@ async def test_extractor_payload_flows_through_lamoda_search(monkeypatch: pytest
     """Exercise the real extractor payload through the public tool mapping."""
     payload = _extract(server._SEARCH_EXTRACT_JS)
 
-    async def fake_render(query: str, ctx: object) -> dict:
+    async def fake_render(query: str, ctx: object, url: str | None = None) -> dict:
         return payload
 
     monkeypatch.setattr(server, "_cdp_render_search", fake_render)

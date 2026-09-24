@@ -1,31 +1,73 @@
 ---
 name: lamoda-connector
-description: Use this skill when the operator needs Lamoda fashion data — search or a product card with sizes. Trigger on "ламода", "lamoda", "кроссовки lamoda". Cards work anonymously (GraphQL); search needs the operator's Chrome over CDP. Skip for non-Lamoda tasks.
+description: Use this skill when the operator shops Lamoda for clothes, shoes or accessories — a specific item, a style in given colours, or a whole capsule wardrobe to turn into a cart-ready shortlist. Trigger on "ламода", "lamoda", "капсула", "capsule wardrobe", "подбери образ", "find me a jacket like". Search, full cards and photos run through the operator's Chrome; a light card also answers over anonymous GraphQL. Skip for non-Lamoda tasks.
 ---
 
 # Lamoda Connector
 
-Two tiers by endpoint. The GraphQL product endpoint answers plain anonymous
-HTTPS — it enriches a SKU you already have with real prices, brand, sizes and
-availability. Everything that would find a SKU (search, catalog, HTML) sits
-behind the same 307 redirect loop as Ozon, so discovery runs in the operator's
-Chrome over CDP.
+Lamoda pages are Nuxt SSR, and the connector reads the page state rather than
+scraping tiles. That state gives what a shopper needs: brand, colour family,
+sizes in stock, photos, and the site's own filters (gender, colour, brand,
+size) with counts. Discovery runs in the operator's Chrome over CDP.
 
 ## When to use
-- Search Lamoda by text (CDP tier)
-- One product's price, old price, per-size availability (GraphQL, anonymous)
+- Find items by type, colour, brand and size, men's or women's (CDP tier)
+- Judge style from photos: titles cannot tell a Harrington from a windbreaker
+- One product's full card: composition, size measurements and stock, other colours, rating
+- Turn a capsule request into a shortlist the operator can put in the cart
 
 ## Tools available
-- `lamoda_search(query)` — tiles from the rendered search page (CDP)
-- `lamoda_card(sku_or_url)` — GraphQL enrichment. SKU looks like MP002XM1RMM3;
-  URLs carry it lowercased, the connector normalises.
+- `lamoda_search(query, gender?, colors?, brands?, sizes?, sort?, page?, limit?)`
+  — filtered search. Items carry sku, title, brand, color, price_rub,
+  old_price_rub, loyalty_price_rub, sizes_in_stock, image_url, url; the
+  response carries total_found, pages and `facets` (colours, sizes, top
+  brands, with counts) to refine by.
+- `lamoda_images(skus, photos_per_item?, size?)` — up to 12 products' photos as
+  images, each labelled `#n SKU brand colour`. Needs a vision-capable model.
+- `lamoda_card(sku_or_url, detail?)` — `detail=true` reads the product page:
+  colour, gallery, description, composition/season/lengths (`attributes`),
+  per-size stock and body measurements, the same model in other colours,
+  rating. Without detail it asks the light GraphQL endpoint (price, brand,
+  sizes) and falls back to the page when that is blocked.
 
-**Not an MCP tool:** `lamoda_selfcheck()` probes both tiers. It is CLI-only —
-`marketplace-mcp doctor` runs every connector's canary at once.
+**Not an MCP tool:** `lamoda_selfcheck()` probes search and card. It is CLI-only —
+`marketplace-mcp doctor lamoda` runs it.
+
+## Capsule → shortlist workflow
+1. **Decompose** the request into slots: garment type in Russian (the catalogue
+   is Russian — "куртка", "бомбер", "брюки чинос", "кардиган"), colour
+   families, the operator's size, gender. Ask for the size once if unknown.
+2. **Search each slot** with filters, not with colour words in the query:
+   `lamoda_search("бомбер", gender="men", colors=["navy", "olive"], sizes=["50"])`.
+   Olive has no family of its own — Lamoda files it under хаки. Several colours
+   in one call are OR-ed. Lamoda names garments loosely (a Harrington may be a
+   "Бомбер", "Ветровка" or "Куртка-рубашка"), so query the family, not the style.
+3. **Look before choosing**: pass the 8-12 most plausible SKUs to
+   `lamoda_images`. Discard what does not match the style; the colour label is
+   a family, and the photo decides the shade.
+4. **Refine** with `facets`: a brand that keeps matching, a colour the operator
+   did not name but fits, or `page=2` when the first page thins out.
+5. **Confirm finalists** with `lamoda_card(sku, detail=true)`: the size is in
+   stock, composition and season fit, measurements fit the operator; offer a
+   finalist's `other_colors` when the slot has an alternative colour.
+6. **Hand over** a per-slot shortlist: SKU, brand, title, colour, size in
+   stock, price, url, one line on why it fits. Cart and checkout stay with the
+   operator; this connector never writes.
 
 ## Gotchas
-- Lamoda exposes NO ratings anywhere — `rating` is not in the GraphQL schema.
-  No review tools exist here by design.
+- A missing price is `null`, never `0`: `price_rub: null` means Lamoda had no
+  usable price — treat it as no data, never as a free item.
+- `price_rub` is the everyday price with public sales applied.
+  `loyalty_price_rub` is Lamoda Club only, never the everyday price.
+- An unknown colour name is `bad_request` listing the known families; it is
+  never silently dropped. Brand names resolve through the page's brand facet;
+  unmatched names come back in `brands_not_in_results`.
+- `no_results` with a filter set is a real empty result — widen a filter
+  rather than retrying the same call.
+- `dom_fallback` in warnings means the page shipped without its state: items
+  still carry sku, title and price, but no brand, colour, sizes or photos.
+- Lamoda publishes a review rating only on the product page (`rating`, 1-5,
+  with `reviews_count`); search results carry none.
 - An empty search with a detected visible challenge returns `challenge_required`;
   it is not cached. Complete the interaction in the connected Chrome profile,
   then retry. Empty extraction without challenge evidence remains parser drift,
@@ -33,8 +75,6 @@ Chrome over CDP.
 - With `CHROME_CHALLENGE_HANDOFF_S` enabled, `handoff_expires_at` confirms a
   retained search tab. Complete its interaction, then repeat the same query in
   the same MCP session before expiry to read that tab without a new navigation.
-- A missing price is `null`, never `0`: `price_rub: null` means Lamoda had no
-  usable price — treat it as no data, never as a free item.
 ## DSH activation
 
 In DeepSeek Harness, the default profile exposes only `compare_prices` and

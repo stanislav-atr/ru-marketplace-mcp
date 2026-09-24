@@ -1,0 +1,9 @@
+{
+  "url": "https://www.lamoda.ru/c/4152/default-men/?q=%D0%B1%D0%BE%D0%BC%D0%B1%D0%B5%D1%80&colors=643",
+  "captured_at": "2026-09-24",
+  "sha256": "0f2e102a4abb60f3da43964dce4f12032890185f8ce5562afeb3bcf61f0ed74a",
+  "method": "output of catalog.SEARCH_STATE_JS evaluated in the operator's Chrome over CDP on the live men's blue-bomber search; trimmed to the first 6 products and the first 25 brand facet values, everything else verbatim",
+  "ground_truth": {
+    "note": "page 1 of 11, 650 found for 'бомбер' under men with colors=643 (синий); every product's color is синий"
+  }
+}

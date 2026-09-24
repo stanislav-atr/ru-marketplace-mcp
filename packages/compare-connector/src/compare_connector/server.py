@@ -657,9 +657,9 @@ async def _search_megamarket(query: str, limit: int) -> list[MarketOffer]:
 
 
 async def _search_lamoda(query: str, limit: int) -> list[MarketOffer]:
-    """Adapt ``lamoda_search`` results (CDP tier; Lamoda exposes no ratings)."""
+    """Adapt ``lamoda_search`` results (CDP tier; search results carry no ratings)."""
     server = SOURCES["lamoda"]
-    response = await server.lamoda_search(query=query)
+    response = await server.lamoda_search(query=query, limit=max(1, min(limit, 60)))
 
     offers: list[MarketOffer] = []
     for item in (getattr(response, "items", None) or [])[:limit]:
@@ -673,7 +673,9 @@ async def _search_lamoda(query: str, limit: int) -> list[MarketOffer]:
                 price_rub=item.price_rub,
                 rating=None,
                 rating_count=None,
-                in_stock=None,
+                # Lamoda reports sellability from its page state; the DOM
+                # fallback leaves it None, which stays "unknown".
+                in_stock=getattr(item, "in_stock", None),
                 url=item.url or "",
             )
         )
@@ -1336,7 +1338,7 @@ async def compare_sources(ctx: Context | None = None) -> dict[str, Any]:
             "yandex_market": "reports both an everyday price and a Plus-subscriber price",
             "taobao": "reports yuan prices and is never ranked against rubles",
             "megamarket": "reachable only through the operator's Chrome (ServicePipe)",
-            "lamoda": "search through the operator's Chrome; cards via anonymous GraphQL",
+            "lamoda": "search and full cards through the operator's Chrome; light cards via anonymous GraphQL where reachable",
             "dns": "reachable only through the operator's Chrome (Qrator)",
             "citilink": "reachable only through the operator's Chrome (Qrator)",
             "aliexpress": (

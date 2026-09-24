@@ -60,10 +60,10 @@ MPStats стоит особняком: это единственный **пла�
 поэтому он опционален и подключается по желанию, на остальные тринадцать
 серверов он не влияет никак.
 
-Всего 39 инструментов в 14 серверах на общем рантайме `mcp-core`. Плюс объединённый
+Всего 40 инструментов в 14 серверах на общем рантайме `mcp-core`. Плюс объединённый
 `marketplace-mcp`, который монтирует всё разом — одна запись в конфиге клиента
 вместо четырнадцати. Он добавляет свой инструмент `marketplace_sources` (какие коннекторы
-поднялись, а какие отвалились и почему), так что в нём 40 инструментов: 39
+поднялись, а какие отвалились и почему), так что в нём 41 инструмент: 40
 смонтированных плюс этот.
 
 **Проверка 2.4.2:** доступность всех площадок не подтверждена. WB прошёл selfcheck и сверку поиска с карточкой; карточки Яндекса остаются inconclusive. Визуальная и браузерная приёмка не выполнена. [Статус источников](docs/releases/RELEASE_NOTES_v2.4.2.md).
@@ -79,7 +79,7 @@ MPStats стоит особняком: это единственный **пла�
 git clone https://github.com/Vladimir-Human/ru-marketplace-mcp.git
 cd ru-marketplace-mcp
 uv sync --all-packages
-uv run pytest -q -m "not live and not cdp"   # 1851 офлайн-тестов, сеть не нужна
+uv run pytest -q -m "not live and not cdp"   # 1905 офлайн-тестов, сеть не нужна
 ```
 
 Проверка живого эндпоинта:
@@ -377,9 +377,11 @@ TLS-имперсонация. Если Cloudflare выдаёт челлендж,
 JSON API из-за ServicePipe, и одного пройденного челленджа мало: анонимной сессии
 API отдаёт пустой список, нужен активный вход в Мегамаркет. DNS (`dns_*`) и Ситилинк
 (`citilink_*`) — отрисованный DOM из-за Qrator; у всех трёх анонимного пути нет вообще.
-Lamoda (`lamoda_*`) наполовину: карточки берутся анонимно через GraphQL, а поиск —
-через Chrome. Chrome с CDP (`scripts/start_chrome_cdp.sh`) нужен всем, кроме карточек
-Lamoda.
+Lamoda (`lamoda_*`) наполовину: поиск с фильтрами (пол, цвет, бренд, размер) и
+полная карточка читаются через Chrome, а лёгкая карточка (цена и размеры) — анонимно
+через GraphQL, если сеть его пускает. `lamoda_images` показывает фото товаров модели
+с поддержкой изображений. Chrome с CDP (`scripts/start_chrome_cdp.sh`) нужен всем,
+кроме лёгких карточек Lamoda.
 
 Всего через CDP ходят восемь источников — эти плюс Taobao, AliExpress, Ozon и
 Авито, где Chrome лишь
@@ -575,7 +577,7 @@ TTL.
 
 ```bash
 uv sync --all-packages
-uv run pytest -q -m "not live and not cdp"    # 1851 офлайн-тестов
+uv run pytest -q -m "not live and not cdp"    # 1905 офлайн-тестов
 uv run pytest -q -m "not live"                # то, что гоняет CI
 uv run pytest -q -m "not live" --cov          # покрытие, порог 70% в CI
 uv run ruff check . && uv run ruff format --check .
@@ -641,7 +643,7 @@ CI прогоняет тесты на Ubuntu, Windows и macOS против Pyth
 ## Как это сделано
 
 Код и документацию я писал вместе с ИИ-ассистентами. Они работают быстро и
-ошибаются уверенно, поэтому проект устроен вокруг проверки: 1851 офлайн-тестов,
+ошибаются уверенно, поэтому проект устроен вокруг проверки: 1905 офлайн-тестов,
 аудит перед выпуском, тесты, которые прогоняют настоящий экстрактор по снятой с
 сайта разметке. В заметках к релизу перечислено, какие источники сверены с живыми
 страницами вручную и какие остались непроверенными.
@@ -713,10 +715,10 @@ MPStats stands apart as the only **paid** source: without `MPSTATS_MP_AUTH` the
 server boots but its tools answer `auth_missing`. It is therefore optional —
 plug it in if you have an account; the other thirteen servers never notice.
 
-39 tools across 14 stdio MCP servers, sharing one runtime (`mcp-core`), plus the
+40 tools across 14 stdio MCP servers, sharing one runtime (`mcp-core`), plus the
 unified `marketplace-mcp` that mounts them all under one client entry. It adds its
 own `marketplace_sources` tool — which connectors mounted, and which dropped out and
-why — so it exposes 40 tools: the 39 mounted plus that one. stdio is the default;
+why — so it exposes 41 tools: the 40 mounted plus that one. stdio is the default;
 HTTP transport is opt-in for remote deployment — see
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
@@ -728,7 +730,7 @@ Requires **Python 3.12+** and [uv](https://docs.astral.sh/uv/).
 git clone https://github.com/Vladimir-Human/ru-marketplace-mcp.git
 cd ru-marketplace-mcp
 uv sync --all-packages
-uv run pytest -q -m "not live and not cdp"    # 1851 offline tests, no network needed
+uv run pytest -q -m "not live and not cdp"    # 1905 offline tests, no network needed
 ```
 
 Client configuration mirrors the Russian section above. Each server is a console
@@ -927,8 +929,11 @@ These four read through your Chrome (CDP). Megamarket (`megamarket_*`) goes
 through the mobile JSON API behind ServicePipe and needs an active login — an
 anonymous session reads empty. DNS (`dns_*`) and Citilink (`citilink_*`) render
 DOM behind Qrator with no anonymous path at all. Lamoda (`lamoda_*`) is split:
-cards over anonymous GraphQL, search through Chrome. All of them need Chrome
-with CDP (`scripts/start_chrome_cdp.sh`), except Lamoda cards. Eight sources
+filtered search (gender, colour, brand, size) and the full product card read
+through Chrome; a light card (price and sizes) comes over anonymous GraphQL
+where the network allows it. `lamoda_images` hands product photos to a
+vision-capable model. All of them need Chrome with CDP
+(`scripts/start_chrome_cdp.sh`), except light Lamoda cards. Eight sources
 run through CDP in total: these plus Taobao, AliExpress, Ozon and Avito, where
 Chrome is only the fallback tier when the anonymous one is challenged.
 
@@ -1089,7 +1094,7 @@ import, and `compare_prices` queries the same subset.
 
 ```bash
 uv sync --all-packages
-uv run pytest -q -m "not live and not cdp"    # 1851 offline tests
+uv run pytest -q -m "not live and not cdp"    # 1905 offline tests
 uv run pytest -q -m "not live"                # what CI runs
 uv run pytest -q -m "not live" --cov          # coverage, CI enforces a 70% floor
 uv run ruff check . && uv run ruff format --check .
@@ -1151,7 +1156,7 @@ harvesting.
 ## How this was built
 
 I wrote the code and the documentation with AI assistants. They are fast and they
-are confidently wrong, so the project is arranged around verification: 1851 offline
+are confidently wrong, so the project is arranged around verification: 1905 offline
 tests, an audit before the release, tests that run the real extractor against
 markup captured from the live site. The release notes say which sources were
 compared against live pages by hand and which were left unverified.

@@ -9,6 +9,41 @@
 
 ## [Unreleased]
 
+### Added
+
+- `lamoda_search` takes Lamoda's own filters — `gender`, `colors`, `brands`,
+  `sizes`, `sort`, `page`, `limit` — and reads the page's Nuxt state instead of
+  the tiles: items now carry the real brand, the colour family, sizes in stock
+  and a photo URL, and the response carries `total_found`, `pages`,
+  `filters_applied` and `facets` (colours, sizes, top brands with counts).
+  Colours accept Lamoda's titles, English names and Russian adjective forms
+  ("navy", "синяя", "оливковые" → хаки); an unknown colour is `bad_request`,
+  never silently dropped. Brand names resolve through the page's brand facet.
+  The DOM tiles remain the fallback, flagged `dom_fallback`.
+- `lamoda_images` returns up to 12 products' photos as MCP images, each
+  labelled with SKU, brand and colour, so a vision-capable model can judge
+  style — the step that titles alone cannot do.
+- `lamoda_card(detail=true)` reads the product page: colour, gallery,
+  description, composition and season, per-size stock with body
+  measurements, the same model in other colours, and the review rating.
+- The Lamoda skill documents a capsule → shortlist workflow: one filtered
+  search per garment slot, photos before choosing, detailed cards for
+  finalists, a per-slot shortlist for the operator's cart.
+
+### Changed
+
+- Lamoda prices separate the everyday price from the Lamoda Club member price
+  (`loyalty_price_rub`), the same rule as Yandex Plus. Search previously read
+  the displayed Club price as `price_rub`.
+- `lamoda_card` falls back to the product page when the GraphQL endpoint is
+  refused (HTTP 403 "Запрос отклонен" observed 2026-09-24 while the same host
+  rendered in Chrome), and `lamoda_selfcheck` reports one `card` check that is
+  healthy when either tier answers, probing the page with a SKU the live
+  search just returned. A GraphQL parser drift is now reported as drift; the
+  old check read the exception class name and could never see it.
+- `compare_prices` receives Lamoda's stock status and brand, so
+  `in_stock_only` no longer excludes every Lamoda offer as unknown.
+
 ### Fixed
 
 - Wildberries reads `card.wb.ru`, `search.wb.ru` and `catalog.wb.ru` through

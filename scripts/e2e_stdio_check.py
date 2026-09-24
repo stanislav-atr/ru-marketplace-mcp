@@ -37,13 +37,13 @@ EXPECTED_TOOLS = {
     "avito-mcp": 3,
     "taobao-mcp": 2,
     "megamarket-mcp": 2,
-    "lamoda-mcp": 2,
+    "lamoda-mcp": 3,
     "dns-mcp": 2,
     "citilink-mcp": 2,
     "aliexpress-mcp": 2,
     "cian-mcp": 2,
     "mpstats-mcp": 2,
-    "marketplace-mcp": 40,  # 39 mounted + marketplace_sources
+    "marketplace-mcp": 41,  # 40 mounted + marketplace_sources
 }
 
 TIMEOUT_S = 60.0

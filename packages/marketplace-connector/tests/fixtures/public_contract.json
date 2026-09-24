@@ -773,10 +773,18 @@
     "output": {
       "properties": {
         "_meta": {},
+        "attributes": {},
         "brand": {},
+        "color": {},
+        "description": {},
+        "images": {},
         "is_available": {},
+        "loyalty_price_rub": {},
         "old_price_rub": {},
+        "other_colors": {},
         "price_rub": {},
+        "rating": {},
+        "reviews_count": {},
         "sizes": {},
         "sku": {},
         "status": {},
@@ -789,6 +797,10 @@
     "parameters": {
       "additionalProperties": false,
       "properties": {
+        "detail": {
+          "default": false,
+          "type": "boolean"
+        },
         "sku_or_url": {
           "maxLength": 300,
           "minLength": 1,
@@ -801,24 +813,148 @@
       "type": "object"
     }
   },
+  "lamoda_images": {
+    "output": {
+      "type": "object"
+    },
+    "parameters": {
+      "additionalProperties": false,
+      "properties": {
+        "photos_per_item": {
+          "default": 1,
+          "maximum": 3,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "size": {
+          "default": "small",
+          "enum": [
+            "small",
+            "medium"
+          ],
+          "type": "string"
+        },
+        "skus": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "skus"
+      ],
+      "type": "object"
+    }
+  },
   "lamoda_search": {
     "output": {
       "properties": {
         "_meta": {},
         "count": {},
+        "facets": {},
+        "filters_applied": {},
         "items": {},
+        "page": {},
+        "pages": {},
         "query": {},
         "status": {},
-        "tier_used": {}
+        "tier_used": {},
+        "total_found": {}
       },
       "type": "object"
     },
     "parameters": {
       "additionalProperties": false,
       "properties": {
+        "brands": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 8,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "colors": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 6,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "gender": {
+          "anyOf": [
+            {
+              "enum": [
+                "men",
+                "women"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "limit": {
+          "default": 30,
+          "maximum": 60,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "page": {
+          "default": 1,
+          "maximum": 50,
+          "minimum": 1,
+          "type": "integer"
+        },
         "query": {
           "maxLength": 200,
           "minLength": 1,
+          "type": "string"
+        },
+        "sizes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 6,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "sort": {
+          "default": "default",
+          "enum": [
+            "default",
+            "new",
+            "price_asc",
+            "price_desc",
+            "discount"
+          ],
           "type": "string"
         }
       },

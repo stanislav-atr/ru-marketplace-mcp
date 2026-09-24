@@ -68,7 +68,7 @@ def _patch_graphql(monkeypatch, product):
 
 
 def _patch_render(monkeypatch, payload):
-    async def fake_render(query, ctx):
+    async def fake_render(query, ctx, url=None):
         return payload
 
     monkeypatch.setattr(server, "_cdp_render_search", fake_render)
@@ -177,6 +177,8 @@ async def test_challenge_recovery_bypasses_failed_payload_cache(monkeypatch):
 
     class Page:
         async def evaluate(self, expression):
+            if expression == server.catalog.SEARCH_STATE_JS:
+                return "null"  # a page without Nuxt state: the DOM path under test
             reads.append(expression)
             payload = (
                 {"items": [], "body_snippet": "Подтвердите, что вы не робот"} if len(reads) == 1 else SEARCH_EXTRACTED
@@ -209,21 +211,67 @@ async def test_selfcheck_healthy_when_both_tiers_answer(monkeypatch):
 
     assert result.status == "success"
     assert result.healthy is True
-    assert result.checks["card_graphql"].state == "healthy"
+    assert result.checks["card"].state == "healthy"
     assert result.checks["search"].state == "healthy"
+    assert "page state missing: search degrades to DOM tiles" in result.checks["search"].notes
 
 
 async def test_selfcheck_graphql_down_is_inconclusive(monkeypatch):
     async def fake_graphql(sku, ctx):
         raise ToolError(server.TransportDownError("Lamoda GraphQL answered HTTP 502"))
 
+    async def fake_page(sku, ctx):
+        raise ToolError(server.TransportDownError("CDP unavailable"))
+
     monkeypatch.setattr(server, "_graphql_card", fake_graphql)
+    monkeypatch.setattr(server, "_cdp_card", fake_page)
     _patch_render(monkeypatch, SEARCH_EXTRACTED)
 
     result = await server.lamoda_selfcheck()
 
     assert result.status == "inconclusive"
-    assert result.checks["card_graphql"].state == "inconclusive"
+    assert result.checks["card"].state == "inconclusive"
+
+
+async def test_selfcheck_card_is_healthy_when_the_page_tier_answers(monkeypatch):
+    """GraphQL refused (HTTP 403 from some networks) is not a broken card when
+    the product page reads, and the page probe uses a SKU search just returned."""
+
+    async def fake_graphql(sku, ctx):
+        raise ToolError(server.TransportDownError("Lamoda GraphQL answered HTTP 403"))
+
+    probed = []
+
+    async def fake_page(sku, ctx):
+        probed.append(sku)
+        return {"sku": sku, "price": 12990, "gallery": ["/M/P/MP002XM1RMM3_1_1_v1_2x.jpg"]}
+
+    monkeypatch.setattr(server, "_graphql_card", fake_graphql)
+    monkeypatch.setattr(server, "_cdp_card", fake_page)
+    _patch_render(monkeypatch, SEARCH_EXTRACTED)
+
+    result = await server.lamoda_selfcheck()
+
+    assert result.status == "success"
+    assert probed == ["MP002XM1RMM3"]
+    assert any(note.startswith("graphql:") for note in result.checks["card"].notes)
+
+
+async def test_selfcheck_graphql_drift_is_flagged_not_hidden(monkeypatch):
+    async def fake_graphql(sku, ctx):
+        server.raise_tool_error(server.ParserDriftError("GraphQL result is dict, expected a list"))
+
+    async def fake_page(sku, ctx):
+        return {"sku": sku, "price": 12990, "gallery": ["/M/P/MP002XM1RMM3_1_1_v1_2x.jpg"]}
+
+    monkeypatch.setattr(server, "_graphql_card", fake_graphql)
+    monkeypatch.setattr(server, "_cdp_card", fake_page)
+    _patch_render(monkeypatch, SEARCH_EXTRACTED)
+
+    result = await server.lamoda_selfcheck()
+
+    assert result.status == "drift_detected"
+    assert result.checks["card"].state == "drift"
 
 
 async def test_selfcheck_cdp_drift_is_flagged(monkeypatch):
