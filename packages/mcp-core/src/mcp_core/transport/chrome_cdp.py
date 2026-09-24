@@ -53,6 +53,7 @@ from typing import Any, Protocol
 from urllib.parse import urlsplit, urlunsplit
 
 from playwright.async_api import Browser, BrowserContext, Page, async_playwright
+from playwright.async_api import Error as _PlaywrightError
 from playwright.async_api import TimeoutError as _PlaywrightTimeoutError
 
 from mcp_core.transport.cdp_budget import navigation_budget
@@ -425,7 +426,9 @@ class _CdpConnectTimeout(RuntimeError):
 
     Chrome >= 151 stopped answering Playwright's connect_over_cdp handshake:
     the websocket connects, then the driver's attach sequence hangs until
-    timeout while plain CDP commands over the same socket answer fine. Callers
+    timeout while plain CDP commands over the same socket answer fine. Chrome
+    153 refuses the same sequence outright with a protocol error ("Browser
+    context management is not supported", 2026-09-24). Callers
     that see this should fall back to the raw-CDP path instead of blaming the
     marketplace.
     """
@@ -450,6 +453,15 @@ async def get_browser() -> AsyncIterator[Browser]:
             raise _CdpConnectTimeout(
                 f"Playwright could not attach to Chrome on {CDP_HOST}:{CDP_PORT} "
                 "(Chrome newer than Playwright's CDP handshake supports)"
+            ) from exc
+        except _PlaywrightError as exc:
+            # Only a refused handshake means "fall back"; a closed port or a
+            # dead socket is a real outage and must surface as one.
+            if "Protocol error" not in str(exc):
+                raise
+            raise _CdpConnectTimeout(
+                f"Chrome on {CDP_HOST}:{CDP_PORT} refused Playwright's CDP handshake "
+                "(Chrome newer than Playwright supports)"
             ) from exc
         try:
             yield browser
@@ -657,6 +669,10 @@ class _RawCdpPage:
         loop = asyncio.get_running_loop()
         deadline = loop.time() + _RAW_NAV_TIMEOUT_S
         nav_error: object = None
+        # A page target's main frame shares the target's id; Page.navigate also
+        # names it. Iframes (ad trackers) load Documents too and must not set
+        # the page's URL or status (2026-09-24: sm.rtb.mts.ru on lamoda.ru).
+        main_frames = {self._target_id}
         while True:
             remaining = deadline - loop.time()
             if remaining <= 0:
@@ -668,9 +684,15 @@ class _RawCdpPage:
             msg = json.loads(raw)
             if msg.get("id") == msg_id and "error" in msg:
                 nav_error = msg["error"]
+            elif msg.get("id") == msg_id and isinstance((msg.get("result") or {}).get("frameId"), str):
+                main_frames.add(msg["result"]["frameId"])
             method = msg.get("method", "")
             params = msg.get("params", {})
-            if method == "Network.responseReceived" and params.get("type") == "Document":
+            if (
+                method == "Network.responseReceived"
+                and params.get("type") == "Document"
+                and params.get("frameId", self._target_id) in main_frames
+            ):
                 response = params.get("response", {})
                 status = response.get("status")
                 if isinstance(status, int):

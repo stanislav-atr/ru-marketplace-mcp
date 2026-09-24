@@ -432,6 +432,64 @@ def test_probe_session_reports_reachable_when_only_the_playwright_attach_fails(m
     assert "raw CDP" in str(result["reason"])
 
 
+def _fake_playwright(error: Exception):
+    class _Chromium:
+        async def connect_over_cdp(self, *a, **k):
+            raise error
+
+    class _P:
+        chromium = _Chromium()
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+    return lambda: _P()
+
+
+def test_get_browser_turns_a_refused_handshake_into_the_raw_cdp_signal(monkeypatch):
+    """Chrome 153 refuses the attach with a protocol error instead of hanging;
+    that must reach open_page as _CdpConnectTimeout so it falls back."""
+    import asyncio
+
+    from playwright.async_api import Error as PlaywrightError
+
+    refused = PlaywrightError(
+        "BrowserType.connect_over_cdp: Protocol error (Browser.setDownloadBehavior): "
+        "Browser context management is not supported."
+    )
+    monkeypatch.setattr(chrome_cdp, "_cdp_port_open", lambda: True)
+    monkeypatch.setattr(chrome_cdp, "async_playwright", _fake_playwright(refused))
+
+    async def attach():
+        async with chrome_cdp.get_browser():
+            pass
+
+    with pytest.raises(chrome_cdp._CdpConnectTimeout):
+        asyncio.run(attach())
+
+
+def test_get_browser_keeps_other_connect_failures_as_outages(monkeypatch):
+    import asyncio
+
+    from playwright.async_api import Error as PlaywrightError
+
+    monkeypatch.setattr(chrome_cdp, "_cdp_port_open", lambda: True)
+    monkeypatch.setattr(
+        chrome_cdp, "async_playwright", _fake_playwright(PlaywrightError("connect ECONNREFUSED 127.0.0.1:9222"))
+    )
+
+    async def attach():
+        async with chrome_cdp.get_browser():
+            pass
+
+    with pytest.raises(PlaywrightError) as info:
+        asyncio.run(attach())
+    assert not isinstance(info.value, chrome_cdp._CdpConnectTimeout)
+
+
 # ------------------------------------------------- raw-CDP fallback (Chrome >=151) ----
 #
 # Chrome >= 151 no longer answers Playwright's connect_over_cdp handshake, so
@@ -573,6 +631,34 @@ def test_goto_and_status_returns_the_last_document_status_and_stops_on_load():
 
     assert asyncio.run(page.goto_and_status("https://x/")) == 200
     assert page.url == "https://x/final"
+
+
+def test_goto_and_status_ignores_iframe_documents():
+    """An ad iframe's document must not become the page URL or its status."""
+    import asyncio
+
+    ws = _FakeWs(
+        [
+            {
+                "method": "Network.responseReceived",
+                "params": {"type": "Document", "frameId": "T1", "response": {"status": 200, "url": "https://x/p"}},
+            },
+            {
+                "method": "Network.responseReceived",
+                "params": {"type": "Document", "frameId": "AD", "response": {"status": 404, "url": "https://ads/s"}},
+            },
+            {
+                "method": "Page.frameNavigated",
+                "params": {"frame": {"id": "AD", "parentId": "T1", "url": "https://ads/s"}},
+            },
+            {"id": 1, "result": {"frameId": "T1"}},
+            {"method": "Page.loadEventFired", "params": {}},
+        ]
+    )
+    page = chrome_cdp._RawCdpPage(ws, "T1")
+
+    assert asyncio.run(page.goto_and_status("https://x/")) == 200
+    assert page.url == "https://x/p"
 
 
 def test_goto_and_status_reports_a_block_page():
