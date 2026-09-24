@@ -18,8 +18,9 @@ size) with counts. Discovery runs in the operator's Chrome over CDP.
 
 ## Tools available
 - `lamoda_search(query, gender?, category?, colors?, brands?, sizes?, materials?,
-  patterns?, styles?, seasons?, price_min?, price_max?, sale_only?, sort?, page?, limit?)`
-  — filtered search. Items carry sku, title, brand, color, price_rub,
+  patterns?, styles?, seasons?, price_min?, price_max?, sale_only?, sort?, page?, all_pages?, limit?)`
+  — filtered search; `all_pages=true` returns the whole pool (up to 300)
+  in one call. IDs may be passed as numbers. Items carry sku, title, brand, color, price_rub,
   old_price_rub, loyalty_price_rub, sizes_in_stock, image_url, url; the
   response carries total_found, pages and `facets` (subcategories, colours,
   sizes, top brands, materials, prints, styles, seasons, with counts) to
@@ -46,6 +47,8 @@ size) with counts. Discovery runs in the operator's Chrome over CDP.
 1. **Decompose** the request into slots: garment type in Russian (the catalogue
    is Russian — "куртка", "бомбер", "брюки чинос", "кардиган"), colour
    families, the operator's size, gender. Ask for the size once if unknown.
+   A brief from the creative stage follows `capsule-brief.md` (next to this
+   file); map its fields as that table says.
 2. **Search each slot** with filters, not with colour words in the query:
    `lamoda_search("бомбер", gender="men", colors=["navy", "olive"], sizes=["50"])`.
    Olive has no family of its own — Lamoda files it under хаки. Several colours
@@ -57,16 +60,25 @@ size) with counts. Discovery runs in the operator's Chrome over CDP.
    in other garments: pass a title ("Верхняя одежда") or an ID from
    `facets.categories`, which lists the next level down. Styles and seasons
    appear only once a category is set.
-3. **Look before choosing**: pass the 8-12 most plausible SKUs to
-   `lamoda_images`. Discard what does not match the style; the colour label is
-   a family, and the photo decides the shade.
+   **Cover the whole pool; never trim it.** Pass `all_pages=true`: it reads
+   every page in one burst and de-duplicates (pages fetched minutes apart
+   overlap and skip items — Lamoda re-ranks). Items are not ordered by fit,
+   so cutting at any row loses matches in proportion. Pick colour families
+   **wide**: labels are seller-assigned and coarse (on 2026-09-25 only 42% of
+   синий was deep navy; olive greens were filed under хаки, зеленый held sage
+   and teal). Leave `limit` unset.
+3. **Look before choosing**: photograph every candidate with `lamoda_images`,
+   12 per sheet, calls in parallel. Sort into match / borderline / reject by
+   the photo; the label is only a family, and the photo decides the shade.
+   Keep borderlines in the hand-over — the operator decides, not the cut.
 4. **Refine** with `facets`: a brand that keeps matching, a colour the operator
-   did not name but fits, or `page=2` when the first page thins out.
+   did not name but fits, a category one level down.
 5. **Confirm finalists** with `lamoda_card(sku, detail=true)`: the size is in
    stock, composition and season fit, measurements fit the operator; offer a
    finalist's `other_colors` when the slot has an alternative colour.
-6. **Hand over** a per-slot shortlist: SKU, brand, title, colour, size in
-   stock, price, url, one line on why it fits. Cart and checkout stay with the
+6. **Hand over** per slot: finalists (SKU, brand, title, colour, size in
+   stock, price, url, one line on why), then every other match, then the
+   borderlines with a word on why — nothing that matched is dropped. Cart and checkout stay with the
    operator; this connector never writes.
 
 ## Gotchas
@@ -79,6 +91,9 @@ size) with counts. Discovery runs in the operator's Chrome over CDP.
 - An unknown colour name is `bad_request` listing the known families; it is
   never silently dropped. Brand names resolve through the page's brand facet;
   unmatched names come back in `brands_not_in_results`.
+- `pool_incomplete` / `pool_truncated` / `page_failed` say part of the pool was
+  not seen; `limited` says rows were cut by `limit`. Report them, never hide
+  them; narrow the filters or retry rather than presenting the pool as whole.
 - `no_results` with a filter set is a real empty result — widen a filter
   rather than retrying the same call.
 - `dom_fallback` in warnings means the page shipped without its state: items

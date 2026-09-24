@@ -32,6 +32,7 @@ import re
 import time
 import urllib.parse
 from collections import OrderedDict
+from collections.abc import Callable
 from typing import Annotated, Any, Literal
 
 import httpx
@@ -116,7 +117,8 @@ mcp = FastMCP(
     instructions=(
         "Lamoda fashion catalog, read through the operator's Chrome over CDP. "
         "lamoda_search filters by gender, category, colour, brand, size, material, print, "
-        "style, season, price and sale, checks each filter applied, and returns brand, "
+        "style, season, price and sale, checks each filter applied, reads a whole pool "
+        "with all_pages=true, and returns brand, "
         "colour, sizes in stock and photo URLs; lamoda_images shows photos to judge "
         "style; lamoda_card(detail=true) gives composition, measurements and other "
         "colours. For a capsule, search each garment slot separately."
@@ -372,17 +374,20 @@ async def _read_state(page, script: str) -> Any:
         return None
 
 
-async def _cdp_render_search(query: str, ctx: Context | None, url: str | None = None) -> dict[str, Any]:
+async def _cdp_render_search(
+    query: str, ctx: Context | None, url: str | None = None, *, fresh: bool = False
+) -> dict[str, Any]:
     """Tier-2: render the search page in the operator's Chrome, extract tiles and state.
 
     ``url`` carries the filters (see ``catalog.build_search_url``); a bare query
-    renders the plain search page.
+    renders the plain search page. ``fresh`` skips the cache read: pages of one
+    pool must come from one burst, because Lamoda re-ranks within minutes.
     """
     url = url or f"{SITE_BASE}/catalogsearch/result/?q={urllib.parse.quote(query)}"
     cache_key = f"search:{url}"
     scope = current_mcp_session_id(ctx)
     pending = has_pending_handoff(scope=scope, operation="lamoda_search", url=url)
-    cached = None if pending else _cache.get(cache_key)
+    cached = None if pending or fresh else _cache.get(cache_key)
     if cached is not None:
         return cached
 
@@ -488,8 +493,15 @@ _FACET_INPUTS: tuple[tuple[str, str, str, dict[str, str] | None], ...] = (
 )
 
 
-def _clean_list(values: list[str] | None, limit: int, what: str) -> list[str]:
-    cleaned = [v.strip() for v in values or [] if isinstance(v, str) and v.strip()]
+# Pages one all_pages search collects: 300 products. A bigger pool is reported
+# as truncated, never cut silently.
+_MAX_POOL_PAGES = 5
+
+
+def _clean_list(values: list[str | int] | None, limit: int, what: str) -> list[str]:
+    # Clients send a numeric-looking ID as a JSON number even when the schema
+    # says string ("479" arrived as 479, 2026-09-25), so both are accepted.
+    cleaned = [str(v).strip() for v in values or [] if isinstance(v, str | int) and str(v).strip()]
     if len(cleaned) > limit:
         raise_tool_error(BadRequestError(f"at most {limit} {what} per search; got {len(cleaned)}"))
     return cleaned
@@ -526,6 +538,59 @@ def _unapplied_filters(
     return out
 
 
+async def _collect_pool(
+    query: str,
+    ctx: Context | None,
+    url_for: Callable[[int, str], str],
+    sort: str,
+    warnings: list[str],
+) -> dict[str, Any]:
+    """Every page of one search, fetched in one burst and de-duplicated.
+
+    Lamoda re-ranks within minutes, so pages loaded apart overlap and skip
+    items (2026-09-25: 26 of 207 never shown). One burst is consistent; if the
+    union still falls short, a second pass in price order (stable) fills it.
+    What is still missing is reported, never hidden.
+    """
+    first = await _cdp_render_search(query, ctx, url=url_for(1, sort), fresh=True)
+    state = first.get("state")
+    if _anti_bot_challenge(first) or not isinstance(state, dict):
+        return first
+    raw_pagination = state.get("pagination")
+    pagination: dict[str, Any] = raw_pagination if isinstance(raw_pagination, dict) else {}
+    found = R.coerce_int(pagination.get("found")) or 0
+    pages = R.coerce_int(pagination.get("pages")) or 1
+    wanted = min(pages, _MAX_POOL_PAGES)
+    if pages > _MAX_POOL_PAGES:
+        warnings.append(f"pool_truncated: {_MAX_POOL_PAGES * 60} of {found} fetched; narrow the filters to see all")
+    merged: dict[str, dict[str, Any]] = {}
+    fetched = 0
+
+    def take(page_state: Any) -> None:
+        for product in page_state.get("products") or [] if isinstance(page_state, dict) else []:
+            if isinstance(product, dict) and isinstance(product.get("sku"), str):
+                merged.setdefault(product["sku"], product)
+
+    take(state)
+    fetched += 1
+    for srt in (sort, "price_asc"):
+        start = 2 if srt == sort else 1
+        for pg in range(start, wanted + 1):
+            try:
+                page_payload = await _cdp_render_search(query, ctx, url=url_for(pg, srt), fresh=True)
+            except Exception as exc:  # one slow page must not sink the pages already read
+                reason = _tool_error_message(exc) if isinstance(exc, ToolError) else type(exc).__name__
+                warnings.append(f"page_failed: {pg} ({reason[:80]})")
+                continue
+            take(page_payload.get("state"))
+            fetched += 1
+        if len(merged) >= min(found, wanted * 60) or srt == "price_asc":
+            break
+    if len(merged) < min(found, wanted * 60):
+        warnings.append(f"pool_incomplete: {len(merged)} of {min(found, wanted * 60)} items seen")
+    return {**first, "state": {**state, "products": list(merged.values())}, "_pages_fetched": fetched}
+
+
 @mcp.tool(
     name="lamoda_search",
     annotations=ToolAnnotations(
@@ -541,7 +606,7 @@ async def lamoda_search(
         Field(description="Scope to Lamoda's men's or women's catalogue. Omit for both."),
     ] = None,
     colors: Annotated[
-        list[str] | None,
+        list[str | int] | None,
         Field(
             description="Colour families: Lamoda titles ('синий', 'хаки'), English ('navy', 'olive') or facet IDs. "
             "Olive is filed under хаки. Several are OR-ed.",
@@ -549,18 +614,18 @@ async def lamoda_search(
         ),
     ] = None,
     brands: Annotated[
-        list[str] | None,
+        list[str | int] | None,
         Field(description="Brand names or facet IDs, OR-ed; names resolve through the brand facet.", max_length=8),
     ] = None,
     sizes: Annotated[
-        list[str] | None,
+        list[str | int] | None,
         Field(
             description="Russian sizes as the size facet lists them ('48', '50'); keeps items with one in stock.",
             max_length=6,
         ),
     ] = None,
     category: Annotated[
-        str | None,
+        str | int | None,
         Field(
             description="Lamoda category ID or title ('Верхняя одежда', 'Рубашки'); scopes to that subtree and "
             "its gender. facets.categories lists the next level down with IDs.",
@@ -568,19 +633,19 @@ async def lamoda_search(
         ),
     ] = None,
     materials: Annotated[
-        list[str] | None,
+        list[str | int] | None,
         Field(description="Main material: 'хлопок', 'лен', 'шерсть', English or IDs; OR-ed.", max_length=6),
     ] = None,
     patterns: Annotated[
-        list[str] | None,
+        list[str | int] | None,
         Field(description="Print: 'однотонный', 'клетка', 'полоска', English or IDs; OR-ed.", max_length=6),
     ] = None,
     styles: Annotated[
-        list[str] | None,
+        list[str | int] | None,
         Field(description="Style: 'повседневный', 'деловой', 'спортивный', 'вечерний'.", max_length=4),
     ] = None,
     seasons: Annotated[
-        list[str] | None,
+        list[str | int] | None,
         Field(description="Season: 'демисезон' (spring/autumn), 'зима', 'лето', 'мульти'.", max_length=4),
     ] = None,
     price_min: Annotated[
@@ -593,8 +658,26 @@ async def lamoda_search(
     sort: Annotated[
         Literal["default", "new", "price_asc", "price_desc", "discount"], Field(description="Result order.")
     ] = "default",
-    page: Annotated[int, Field(ge=1, le=50, description="Result page; Lamoda pages hold 60 products.")] = 1,
-    limit: Annotated[int, Field(ge=1, le=60, description="Items to return from the page.")] = 30,
+    page: Annotated[
+        int,
+        Field(
+            ge=1,
+            le=50,
+            description="Result page; Lamoda pages hold 60 products. Pages fetched minutes apart overlap "
+            "(Lamoda re-ranks), so use all_pages to see a whole pool.",
+        ),
+    ] = 1,
+    all_pages: Annotated[
+        bool,
+        Field(
+            description=f"Collect every page in one pass (up to {_MAX_POOL_PAGES * 60} products), de-duplicated, "
+            "so nothing in the pool is missed; page is then ignored."
+        ),
+    ] = False,
+    limit: Annotated[
+        int | None,
+        Field(ge=1, le=_MAX_POOL_PAGES * 60, description="Cap on returned items. Default: every item fetched."),
+    ] = None,
     ctx: Context | None = None,
 ) -> LamodaSearchResponse:
     """Search Lamoda's catalogue with its own filters, rendered in the operator's Chrome.
@@ -669,26 +752,30 @@ async def lamoda_search(
                     facet_titles[name].append(hit[1])
         category_id: str | None = None
         category_title: str | None = None
-        category_name = (category or "").strip() or None
+        category_name = str(category).strip() if category is not None else None
+        category_name = category_name or None
         if category_name and catalog.is_filter_id(category_name):
             category_id, category_name = category_name, None
         text = query.strip()
         price = (price_min, price_max)
 
-        def url_for(ids: dict[str, list[str]], cat: str | None) -> str:
+        def url_for(ids: dict[str, list[str]], cat: str | None, pg: int = page, srt: str = sort) -> str:
             return catalog.build_search_url(
                 text,
                 gender=gender,
                 color_ids=color_ids,
                 brand_ids=ids["brands"],
                 sizes=size_values,
-                sort=sort,
-                page=page,
+                sort=srt,
+                page=pg,
                 category_id=cat,
                 facet_ids={url_name: ids[name] for name, _, url_name, _ in _FACET_INPUTS if name != "brands"},
                 price=price,
                 sale_only=sale_only,
             )
+
+        def pool_url(pg: int, srt: str) -> str:
+            return url_for(facet_ids, category_id, pg, srt)
 
         try:
             if category_name or any(pending.values()):
@@ -737,8 +824,10 @@ async def lamoda_search(
                         )
                     category_id = resolved_ids[0]
                     category_title = next((t for k, t, _ in tree if k == category_id), category_name)
-            url = url_for(facet_ids, category_id)
-            payload = await _cdp_render_search(text, ctx, url=url)
+            if all_pages:
+                payload = await _collect_pool(text, ctx, pool_url, sort, warnings)
+            else:
+                payload = await _cdp_render_search(text, ctx, url=url_for(facet_ids, category_id))
         except NavBlocked as exc:
             raise_tool_error(TransportDownError(f"Lamoda navigation blocked (HTTP {exc.status})."))
         if _anti_bot_challenge(payload):
@@ -793,6 +882,8 @@ async def lamoda_search(
             for row in rows:
                 row.pop("_gallery", None)
             items = [LamodaSearchItemOut(**row) for row in rows[:limit]]
+            if limit is not None and len(rows) > limit:
+                warnings.append(f"limited: {limit} of {len(rows)} fetched items returned")
             for row, product in zip(rows, products, strict=False):
                 _remember(
                     row["sku"],
@@ -809,8 +900,9 @@ async def lamoda_search(
                 tier_used="cdp",
                 count=len(items),
                 total_found=R.coerce_int(pagination.get("found")),
-                page=R.coerce_int(pagination.get("page")) or page,
+                page=None if all_pages else R.coerce_int(pagination.get("page")) or page,
                 pages=R.coerce_int(pagination.get("pages")),
+                pages_fetched=payload.get("_pages_fetched") or 1,
                 filters_applied=applied,
                 facets=_facets_out(state) if isinstance(state, dict) else None,
                 items=items,

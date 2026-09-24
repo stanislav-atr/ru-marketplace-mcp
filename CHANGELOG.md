@@ -28,6 +28,14 @@
   page's own facet. Every filter is checked against the rendered page:
   Lamoda drops unknown parameters silently, so one it ignored is a
   `filter_not_applied: <name>` warning.
+- `lamoda_search(all_pages=true)` reads every page of a search in one burst
+  (up to 300 products), de-duplicates, and fills gaps from a stable
+  price-ordered pass. Lamoda re-ranks within minutes, so pages fetched apart
+  overlapped and skipped items: 26 of 207 were never shown in a live check.
+  What is still unseen is reported (`pool_incomplete`, `pool_truncated`,
+  `page_failed`), never hidden.
+- The Lamoda skill ships `capsule-brief.md`: the YAML brief a creative-stage
+  Claude Project hands over, and how each field maps onto the search.
 - `lamoda_images` returns up to 12 products' photos as MCP images, each
   labelled with SKU, brand and colour, so a vision-capable model can judge
   style — the step that titles alone cannot do.
@@ -42,6 +50,12 @@
   finalists, a per-slot shortlist for the operator's cart.
 
 ### Changed
+
+- `lamoda_search` returns every item it fetched unless `limit` is set (was 30),
+  and says `limited` when it cuts. Cutting rows lost matches in proportion:
+  Lamoda's order does not follow the brief.
+- Lamoda ID inputs (`category`, colour, brand, material... IDs) accept JSON
+  numbers: clients send "479" as 479, which the string-only schema refused.
 
 - Lamoda prices separate the everyday price from the Lamoda Club member price
   (`loyalty_price_rub`), the same rule as Yandex Plus. Search previously read

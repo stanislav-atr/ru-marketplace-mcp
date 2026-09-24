@@ -867,6 +867,7 @@
         "items": {},
         "page": {},
         "pages": {},
+        "pages_fetched": {},
         "query": {},
         "status": {},
         "tier_used": {},
@@ -877,11 +878,22 @@
     "parameters": {
       "additionalProperties": false,
       "properties": {
+        "all_pages": {
+          "default": false,
+          "type": "boolean"
+        },
         "brands": {
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
               },
               "maxItems": 8,
               "type": "array"
@@ -895,8 +907,15 @@
         "category": {
           "anyOf": [
             {
-              "maxLength": 80,
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "maxLength": 80
             },
             {
               "type": "null"
@@ -908,7 +927,14 @@
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
               },
               "maxItems": 6,
               "type": "array"
@@ -935,16 +961,30 @@
           "default": null
         },
         "limit": {
-          "default": 30,
-          "maximum": 60,
-          "minimum": 1,
-          "type": "integer"
+          "anyOf": [
+            {
+              "maximum": 300,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "materials": {
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
               },
               "maxItems": 6,
               "type": "array"
@@ -965,7 +1005,14 @@
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
               },
               "maxItems": 6,
               "type": "array"
@@ -1015,7 +1062,14 @@
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
               },
               "maxItems": 4,
               "type": "array"
@@ -1030,7 +1084,14 @@
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
               },
               "maxItems": 6,
               "type": "array"
@@ -1056,7 +1117,14 @@
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
               },
               "maxItems": 4,
               "type": "array"

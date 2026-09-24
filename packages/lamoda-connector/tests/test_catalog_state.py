@@ -31,7 +31,7 @@ def _clean(monkeypatch):
 
 
 def _patch_render(monkeypatch, state, seen_urls):
-    async def fake_render(query, ctx, url=None):
+    async def fake_render(query, ctx, url=None, fresh=False):
         seen_urls.append(url)
         return {"items": [], "title": "", "body_snippet": "", "state": state}
 
@@ -293,6 +293,81 @@ async def test_an_inverted_price_range_is_a_bad_request(monkeypatch):
     with pytest.raises(ToolError) as exc:
         await server.lamoda_search("ветровка", price_min=9000, price_max=3000)
     assert _code(exc) == "bad_request"
+
+
+def _pool(found: int, pages_by_sort: dict[str, list[list[int]]], calls: list):
+    """A fake renderer serving numbered SKUs per (sort, page), from a real product row."""
+    import urllib.parse
+
+    template = SEARCH_STATE["products"][0]
+
+    async def fake_render(query, ctx, url=None, fresh=False):
+        qs = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(url).query))
+        srt, pg = qs.get("sort", "default"), int(qs.get("page", "1"))
+        calls.append((srt, pg, fresh))
+        skus = pages_by_sort[srt][pg - 1]
+        state = {
+            **SEARCH_STATE,
+            "products": [{**template, "sku": f"SKU{n:04d}"} for n in skus],
+            "pagination": {"page": pg, "pages": len(pages_by_sort["default"]), "found": found},
+        }
+        return {"items": [], "title": "", "body_snippet": "", "state": state}
+
+    return fake_render
+
+
+async def test_all_pages_fills_what_a_reranked_page_skipped_from_a_stable_pass(monkeypatch):
+    calls: list = []
+    # Default order re-ranked between pages: page 2 repeats two page-1 items.
+    default = [list(range(0, 60)), [*range(58, 60), *range(62, 120)], list(range(120, 150))]
+    by_price = [list(range(0, 60)), list(range(60, 120)), list(range(120, 150))]
+    monkeypatch.setattr(server, "_cdp_render_search", _pool(150, {"default": default, "price_asc": by_price}, calls))
+    result = await server.lamoda_search("ветровка", all_pages=True)
+    assert result.count == 150 and len({i.sku for i in result.items}) == 150
+    assert result.page is None and result.pages_fetched == 6
+    assert all(fresh for *_, fresh in calls)
+    assert not [w for w in result.meta.warnings if w.startswith(("pool_", "limited"))]
+
+
+async def test_a_pool_beyond_the_page_cap_is_reported_truncated(monkeypatch):
+    pages = [list(range(p * 60, p * 60 + 60)) for p in range(7)]
+    monkeypatch.setattr(server, "_cdp_render_search", _pool(420, {"default": pages, "price_asc": pages}, []))
+    result = await server.lamoda_search("куртка", all_pages=True)
+    assert result.count == 300
+    assert "pool_truncated: 300 of 420 fetched; narrow the filters to see all" in result.meta.warnings
+
+
+async def test_a_failed_later_page_is_a_warning_not_a_lost_search(monkeypatch):
+    pages = [list(range(60)), list(range(60, 120))]
+    serve = _pool(120, {"default": pages, "price_asc": pages}, [])
+
+    async def flaky(query, ctx, url=None, fresh=False):
+        if "page=2" in url:
+            raise TimeoutError("Page.goto: Timeout 20000ms exceeded")
+        return await serve(query, ctx, url=url, fresh=fresh)
+
+    monkeypatch.setattr(server, "_cdp_render_search", flaky)
+    result = await server.lamoda_search("куртка", all_pages=True)
+    assert result.count == 60
+    assert "page_failed: 2 (TimeoutError)" in result.meta.warnings
+    assert "pool_incomplete: 60 of 120 items seen" in result.meta.warnings
+
+
+async def test_every_fetched_item_is_returned_unless_a_limit_is_asked(monkeypatch):
+    pages = [list(range(60))]
+    monkeypatch.setattr(server, "_cdp_render_search", _pool(60, {"default": pages}, []))
+    assert (await server.lamoda_search("куртка")).count == 60
+    limited = await server.lamoda_search("куртка", limit=10)
+    assert limited.count == 10 and "limited: 10 of 60 fetched items returned" in limited.meta.warnings
+
+
+async def test_numeric_ids_are_accepted_as_numbers(monkeypatch):
+    """Clients send "479" as the JSON number 479."""
+    urls: list = []
+    _patch_render(monkeypatch, FILTERED_STATE, urls)
+    await server.lamoda_search("ветровка", category=479, colors=[643], materials=[19])
+    assert urls[0].startswith("https://www.lamoda.ru/c/479/catalog/")
+    assert "colors=643" in urls[0] and "base_materials=19" in urls[0]
 
 
 async def test_a_state_with_no_products_is_an_empty_result_not_drift(monkeypatch):

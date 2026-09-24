@@ -78,8 +78,13 @@ class LamodaSearchResponse(BaseModel):
     tier_used: str | None = Field(default=None, description="Fetch tier used (cdp).")
     count: int = Field(default=0, description="Number of items returned.")
     total_found: int | None = Field(default=None, description="Products matching query and filters across all pages.")
-    page: int | None = Field(default=None, description="Page returned (60 products per Lamoda page).")
+    page: int | None = Field(
+        default=None, description="Page returned (60 products per Lamoda page); None for all_pages."
+    )
     pages: int | None = Field(default=None, description="Pages available for this query and filters.")
+    pages_fetched: int | None = Field(
+        default=None, description="Page loads behind this answer (all_pages: every page)."
+    )
     filters_applied: dict[str, list[str] | str] = Field(
         default_factory=dict, description="Filters Lamoda actually received, by Lamoda's own labels."
     )
