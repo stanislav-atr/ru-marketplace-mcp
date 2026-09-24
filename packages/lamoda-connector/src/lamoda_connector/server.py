@@ -115,7 +115,8 @@ mcp = FastMCP(
     version=SERVER_VERSION,
     instructions=(
         "Lamoda fashion catalog, read through the operator's Chrome over CDP. "
-        "lamoda_search filters by gender, colour, brand and size and returns brand, "
+        "lamoda_search filters by gender, category, colour, brand, size, material, print, "
+        "style, season, price and sale, checks each filter applied, and returns brand, "
         "colour, sizes in stock and photo URLs; lamoda_images shows photos to judge "
         "style; lamoda_card(detail=true) gives composition, measurements and other "
         "colours. For a capsule, search each garment slot separately."
@@ -601,7 +602,8 @@ async def lamoda_search(
     Items carry brand, colour family, sizes in stock and a photo URL, so a
     shortlist can be built without opening each card. To judge style, pass
     candidate SKUs to lamoda_images. For a capsule, search each garment slot
-    separately (gender + colors + sizes), then confirm finalists with
+    separately (gender or category + colors + sizes, plus material, price
+    and season when the brief fixes them), then confirm finalists with
     lamoda_card(detail=True) for composition, measurements and other colours.
 
     ## Return Format
