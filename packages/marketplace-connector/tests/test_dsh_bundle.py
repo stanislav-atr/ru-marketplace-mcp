@@ -25,6 +25,11 @@ VENDOR_SKILLS = DSH_ROOT / "skills"
 
 _ALLOWED_DSH_SUFFIXES = {".md", ".json", ".yml"}
 
+# Files the desktop OS drops into any folder it shows (git-ignored, never
+# shipped). macOS Finder recreates .DS_Store within minutes of deletion, so a
+# gate that counts them fails every local run on a Mac for a non-defect.
+_OS_JUNK = {".DS_Store", "Thumbs.db", "desktop.ini"}
+
 
 def _normalise(data: bytes) -> bytes:
     """Byte equality with platform line endings folded to LF."""
@@ -32,7 +37,9 @@ def _normalise(data: bytes) -> bytes:
 
 
 def _files(root: Path) -> set[str]:
-    return {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file()}
+    return {
+        path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file() and path.name not in _OS_JUNK
+    }
 
 
 def _file_state(root: Path, relative: str) -> bytes:
@@ -89,7 +96,7 @@ def test_the_vendor_gate_detects_every_drift_class(tmp_path: Path, mutation: str
 def test_dsh_bundle_contains_only_yaml_json_and_markdown():
     offenders: list[str] = []
     for path in DSH_ROOT.rglob("*"):
-        if not path.is_file():
+        if not path.is_file() or path.name in _OS_JUNK:
             continue
         if path.suffix.lower() not in _ALLOWED_DSH_SUFFIXES:
             offenders.append(str(path.relative_to(REPO_ROOT)))

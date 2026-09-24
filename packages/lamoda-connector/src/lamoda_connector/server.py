@@ -29,6 +29,7 @@ import base64
 import datetime
 import json
 import re
+import time
 import urllib.parse
 from collections import OrderedDict
 from typing import Annotated, Any, Literal
@@ -60,7 +61,7 @@ from mcp_core.transport.browser_handoff import get_handoff_id, has_pending_hando
 from mcp_core.transport.chrome_cdp import NavBlocked, open_page
 from pydantic import Field
 
-from lamoda_connector import catalog
+from lamoda_connector import catalog, sheet
 from lamoda_connector.models_output import (
     LamodaCardResponse,
     LamodaFacetOut,
@@ -125,6 +126,14 @@ mcp.add_middleware(RetryMiddleware())
 _cache: TTLCache = TTLCache(ttl_s=_settings.cache_ttl, max_entries=128)
 _pacer = Pacer(_min_gap)
 _cdp_lock = asyncio.Lock()
+
+# GraphQL can refuse a whole network for hours (HTTP 403 "Запрос отклонен",
+# 2026-09-24) while Chrome reads the same host fine. After two refusals in a
+# row the card skips it for a while instead of paying a failed request first.
+_GRAPHQL_SKIP_AFTER = 2
+_GRAPHQL_SKIP_S = 600.0
+_graphql_refusals = 0
+_graphql_skip_until = 0.0
 
 
 def _proxy() -> str | None:
@@ -797,7 +806,11 @@ async def lamoda_card(
                         gallery=gallery,
                     )
                 else:
+                    if time.monotonic() < _graphql_skip_until:
+                        warnings.append("graphql_tier_skipped: refused recently")
+                        continue
                     product = await _graphql_card(sku, ctx)
+                    _graphql_ok()
                     sizes_field = product.get("sizes")
                     sizes_raw: list[Any] = sizes_field if isinstance(sizes_field, list) else []
                     result = LamodaCardResponse(
@@ -822,6 +835,8 @@ async def lamoda_card(
                     raise
                 failures.append((tier, exc))
                 warnings.append(f"{tier}_tier_unavailable")
+                if tier == "graphql" and "transport_down" in str(exc):
+                    _graphql_refused()
                 log_event("lamoda_card.tier_failed", tier=tier, error=_redact(str(exc))[:160])
         else:
             # Every tier failed. A challenge needs the operator, so it wins;
@@ -842,6 +857,18 @@ async def lamoda_card(
     except Exception as exc:
         log_event("lamoda_card.error", error=_redact(str(exc)), exc_type=type(exc).__name__)
         raise_tool_error(TransportDownError(_redact(f"lamoda_card failed: {exc}")))
+
+
+def _graphql_ok() -> None:
+    global _graphql_refusals, _graphql_skip_until
+    _graphql_refusals, _graphql_skip_until = 0, 0.0
+
+
+def _graphql_refused() -> None:
+    global _graphql_refusals, _graphql_skip_until
+    _graphql_refusals += 1
+    if _graphql_refusals >= _GRAPHQL_SKIP_AFTER:
+        _graphql_skip_until = time.monotonic() + _GRAPHQL_SKIP_S
 
 
 def _tool_error_message(exc: ToolError) -> str:
@@ -886,19 +913,25 @@ async def lamoda_images(
     size: Annotated[
         Literal["small", "medium"], Field(description="small 236x341 (~13 KB), medium 389x562 (~31 KB).")
     ] = "small",
+    layout: Annotated[
+        Literal["sheet", "separate"],
+        Field(description="sheet: one grid image, each tile labelled '#n SKU'; separate: one image per photo."),
+    ] = "sheet",
     ctx: Context | None = None,
 ) -> ToolResult:
     """Show product photos as images, so a vision model can judge style and colour.
 
     Titles and colour labels cannot tell a Harrington from a windbreaker; the
-    photo can. Each image is preceded by a label '#n SKU brand colour'. SKUs
-    already returned by lamoda_search/lamoda_card cost no page load; others
-    open their product page first.
+    photo can. By default the photos arrive as one grid image whose tiles are
+    labelled '#n SKU' — robust to clients that drop text between images; the
+    JSON index maps n to brand, title and colour. SKUs already returned by
+    lamoda_search/lamoda_card cost no page load; others open their page first.
 
     ## Return Format
 
     MCP content: a JSON index {items[{n, sku, brand, title, color, price_rub,
-    url, image_urls}], warnings}, then label + image/jpeg pairs.
+    url, image_urls}], warnings}, then one image/jpeg sheet (layout=sheet) or
+    label + image/jpeg pairs (layout=separate).
 
     ## Error Format
 
@@ -960,6 +993,26 @@ async def lamoda_images(
         content: list[TextContent | ImageContent] = [
             TextContent(type="text", text=json.dumps(structured, ensure_ascii=False))
         ]
+        if layout == "sheet":
+            tiles: list[tuple[str, bytes]] = []
+            photo_no: dict[int, int] = {}
+            for (n, sku, _url), data in zip(jobs, images, strict=True):
+                photo_no[n] = photo_no.get(n, 0) + 1
+                if data is not None:
+                    suffix = f".{photo_no[n]}" if photos_per_item > 1 else ""
+                    tiles.append((f"#{n}{suffix} {sku}", data))
+            try:
+                composed = sheet.compose(tiles)
+            except Exception as exc:
+                # Degrade to separate images rather than fail the photos.
+                warnings.append(f"sheet_unavailable: {type(exc).__name__}; photos sent separately")
+            else:
+                content.append(
+                    ImageContent(type="image", data=base64.b64encode(composed).decode("ascii"), mimeType="image/jpeg")
+                )
+                content[0] = TextContent(type="text", text=json.dumps(structured, ensure_ascii=False))
+                return ToolResult(content=content, structured_content=structured)
+            content[0] = TextContent(type="text", text=json.dumps(structured, ensure_ascii=False))
         by_n = {row["n"]: row for row in index}
         for (n, sku, _url), data in zip(jobs, images, strict=True):
             if data is None:

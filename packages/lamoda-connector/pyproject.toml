@@ -16,6 +16,9 @@ dependencies = [
     "pydantic>=2.6",
     "pydantic-settings>=2.2",
     "playwright>=1.40",
+    # lamoda_images composes a labelled contact sheet: one image whose tiles
+    # carry their SKU, because some clients drop the text between images.
+    "pillow>=10.1",
 ]
 
 [project.scripts]

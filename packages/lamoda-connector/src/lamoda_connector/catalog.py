@@ -390,6 +390,12 @@ def resolve_brands(names: list[str], brand_facet: list[tuple[str, str, int | Non
     return ids, unresolved
 
 
+# Product-page attributes that repeat other fields or never inform a choice.
+# Dropping them keeps a detailed card near 1k tokens instead of 2-3k.
+_CARD_ATTRIBUTE_NOISE = frozenset({"Цвет", "Узор", "Артикул", "Гарантийный срок", "Страна производства", "Вид спорта"})
+_CARD_IMAGES = 3
+
+
 def card_fields(product: dict[str, Any]) -> dict[str, Any]:
     """Compact product-page state -> the extra fields of ``LamodaCardResponse``."""
     colors = [c for c in product.get("colors") or [] if isinstance(c, str)]
@@ -402,18 +408,20 @@ def card_fields(product: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(s, dict):
             continue
         stock = R.coerce_int(s.get("stock"))
+        available = (stock > 0) if stock is not None else None
         sizes.append(
             {
                 "size": size_label(s.get("size"), s.get("brand_size")),
-                "is_available": (stock > 0) if stock is not None else None,
+                "is_available": available,
                 "stock": stock,
-                "measurements": s.get("measurements") or None,
+                # Fit data only matters for a size one can order.
+                "measurements": (s.get("measurements") or None) if available is not False else None,
             }
         )
     attributes = {
         str(a[0]): str(a[1])
         for a in product.get("attributes") or []
-        if isinstance(a, list) and len(a) == 2 and a[0] and a[1]
+        if isinstance(a, list) and len(a) == 2 and a[0] and a[1] and a[0] not in _CARD_ATTRIBUTE_NOISE
     }
     others = []
     for c in product.get("other_colors") or []:
@@ -445,7 +453,7 @@ def card_fields(product: dict[str, Any]) -> dict[str, Any]:
         "loyalty_price_rub": loyalty if loyalty is not None and price is not None and loyalty < price else None,
         "is_available": in_stock if isinstance(in_stock, bool) else None,
         "sizes": sizes,
-        "images": [u for u in (image_url(p) for p in gallery) if u],
+        "images": [u for u in (image_url(p) for p in gallery) if u][:_CARD_IMAGES],
         "description": product.get("description") or None,
         "attributes": attributes,
         "rating": rating_value,

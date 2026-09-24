@@ -2,15 +2,32 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from mcp_core.models import MetaOutBase, SelfCheckEntryBase, SelfCheckResponseBase
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, model_serializer
 
 
 class MetaOut(MetaOutBase):
     """Lamoda carries the shared envelope unchanged."""
 
 
-class LamodaSearchItemOut(BaseModel):
+class _OmitEmpty(BaseModel):
+    """Rows repeated dozens of times per response drop null and empty fields.
+
+    A 60-item search spent a sixth of its tokens on `"loyalty_price_rub": null`
+    and friends. An absent field reads exactly as a null one: no data.
+    """
+
+    @model_serializer(mode="wrap")
+    def _omit_empty(self, handler: SerializerFunctionWrapHandler) -> Any:
+        data = handler(self)
+        if isinstance(data, dict):
+            return {k: v for k, v in data.items() if v is not None and v != []}
+        return data
+
+
+class LamodaSearchItemOut(_OmitEmpty):
     sku: str | None = Field(default=None, description="Lamoda SKU (e.g. MP002XM1RMM3).")
     title: str | None = Field(default=None, description="Product type plus model name, e.g. 'Бомбер HARRINGTON'.")
     brand: str | None = Field(default=None, description="Brand name.")
@@ -66,14 +83,14 @@ class LamodaSearchResponse(BaseModel):
     meta: MetaOut = Field(default_factory=MetaOut, alias="_meta", description="Validation metadata.")
 
 
-class LamodaSizeOut(BaseModel):
+class LamodaSizeOut(_OmitEmpty):
     size: str | None = Field(default=None, description="Size label, Russian size first: '48/50 (M)'.")
     is_available: bool | None = Field(default=None, description="Whether the size is sellable.")
     stock: int | None = Field(default=None, description="Units left when Lamoda reports them (product page tier).")
     measurements: str | None = Field(default=None, description="Body measurements the size fits, when published.")
 
 
-class LamodaOtherColorOut(BaseModel):
+class LamodaOtherColorOut(_OmitEmpty):
     sku: str = Field(description="SKU of the same model in another colour.")
     color: str | None = Field(default=None, description="Its colour family.")
     in_stock: bool | None = Field(default=None, description="Whether it is sellable now.")

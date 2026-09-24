@@ -820,6 +820,14 @@
     "parameters": {
       "additionalProperties": false,
       "properties": {
+        "layout": {
+          "default": "sheet",
+          "enum": [
+            "sheet",
+            "separate"
+          ],
+          "type": "string"
+        },
         "photos_per_item": {
           "default": 1,
           "maximum": 3,

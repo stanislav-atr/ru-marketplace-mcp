@@ -26,6 +26,9 @@
 - `lamoda_card(detail=true)` reads the product page: colour, gallery,
   description, composition and season, per-size stock with body
   measurements, the same model in other colours, and the review rating.
+- `lamoda_images` returns one labelled contact sheet by default (`layout`),
+  each tile marked `#n SKU`, because some clients drop the text blocks between
+  images. Adds the `pillow` dependency to the Lamoda connector.
 - The Lamoda skill documents a capsule → shortlist workflow: one filtered
   search per garment slot, photos before choosing, detailed cards for
   finalists, a per-slot shortlist for the operator's cart.
@@ -45,6 +48,11 @@
   shared browser lock and the pacer no longer counts, so parallel
   `lamoda_card` calls queue instead of timing out before they navigate.
   When every card tier fails, the error names each tier's reason.
+- Lamoda responses are leaner: search rows, sizes and other-colour rows omit
+  null and empty fields; detailed cards carry three photo URLs, drop
+  duplicate attributes (colour, pattern, article, warranty, country) and list
+  measurements only for sizes in stock. `lamoda_card` skips GraphQL for ten
+  minutes after two refusals in a row instead of paying a failed request first.
 - `compare_prices` receives Lamoda's stock status and brand, so
   `in_stock_only` no longer excludes every Lamoda offer as unknown.
 

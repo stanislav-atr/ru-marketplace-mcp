@@ -25,6 +25,7 @@ def _clean(monkeypatch):
     server._seen.clear()
     monkeypatch.setattr(server, "_min_gap", 0.0)
     server._pacer.reset()
+    server._graphql_ok()
 
 
 def _patch_render(monkeypatch, state, seen_urls):
@@ -234,9 +235,13 @@ async def test_detail_card_reads_the_product_page(monkeypatch):
     assert (card.price_rub, card.old_price_rub, card.loyalty_price_rub) == (33050.0, 47899.0, 31398.0)
     assert card.images and all(u.startswith("https://a.lmcdn.ru/product/") for u in card.images)
     assert card.attributes["Сезон"] == "демисезон, лето"
-    first = card.sizes[0]
+    first, second = card.sizes[0], card.sizes[1]
     assert (first.size, first.stock, first.is_available) == ("44/46 (XS)", 0, False)
-    assert first.measurements == "Обхват груди 88-92 см"
+    assert first.measurements is None  # fit data only for a size one can order
+    assert (second.size, second.is_available) == ("46/48 (S)", True)
+    assert second.measurements == "Обхват груди 92-96 см"
+    assert "Цвет" not in card.attributes and "Артикул" not in card.attributes
+    assert len(card.images) <= 3
     assert server._seen["RTLAEJ669901"]["gallery"]
 
 
@@ -431,3 +436,99 @@ async def test_a_malformed_sku_is_a_bad_request():
     with pytest.raises(ToolError) as exc:
         await server.lamoda_images(["!!"])
     assert _code(exc) == "bad_request"
+
+
+# ------------------------------------------------------------- A: economy pass ----
+
+
+def _jpeg(color: str) -> bytes:
+    import io
+
+    from PIL import Image
+
+    out = io.BytesIO()
+    Image.new("RGB", (236, 341), color).save(out, format="JPEG")
+    return out.getvalue()
+
+
+async def test_photos_arrive_as_one_labelled_sheet_by_default(monkeypatch):
+    import io
+
+    from PIL import Image
+
+    _patch_render(monkeypatch, SEARCH_STATE, [])
+    await server.lamoda_search("бомбер")
+
+    async def fetch(url):
+        return _jpeg("navy")
+
+    monkeypatch.setattr(server, "_fetch_image", fetch)
+    skus = [p["sku"] for p in SEARCH_STATE["products"][:5]]
+    result = await server.lamoda_images(skus)
+    images = [c for c in result.content if isinstance(c, ImageContent)]
+    assert len(images) == 1 and len(result.content) == 2
+    import base64
+
+    sheet = Image.open(io.BytesIO(base64.b64decode(images[0].data)))
+    assert sheet.size == (4 * 236, 2 * (341 + 22))  # 4 columns, labels above each tile
+    index = json.loads(result.content[0].text)
+    assert [row["n"] for row in index["items"]] == [1, 2, 3, 4, 5] and index["warnings"] == []
+
+
+async def test_an_undecodable_photo_batch_falls_back_to_separate_images(monkeypatch):
+    _patch_render(monkeypatch, SEARCH_STATE, [])
+    await server.lamoda_search("бомбер")
+
+    async def fetch(url):
+        return b"not a jpeg"
+
+    monkeypatch.setattr(server, "_fetch_image", fetch)
+    result = await server.lamoda_images(["RTLAFO975401"])
+    index = json.loads(result.content[0].text)
+    assert index["warnings"] == ["sheet_unavailable: ValueError; photos sent separately"]
+    assert [type(c).__name__ for c in result.content] == ["TextContent", "TextContent", "ImageContent"]
+
+
+async def test_graphql_is_skipped_after_repeated_refusals_and_retried_later(monkeypatch):
+    calls: list = []
+
+    async def refused(sku, ctx):
+        calls.append(sku)
+        server.raise_tool_error(server.TransportDownError("Lamoda GraphQL answered HTTP 403."))
+
+    monkeypatch.setattr(server, "_graphql_card", refused)
+    _patch_card_page(monkeypatch, CARD_STATE, [])
+    for _ in range(2):
+        await server.lamoda_card("RTLAEJ669901")
+    assert len(calls) == 2
+    third = await server.lamoda_card("RTLAEJ669901")
+    assert len(calls) == 2 and third.tier_used == "cdp"
+    assert "graphql_tier_skipped: refused recently" in third.meta.warnings
+    monkeypatch.setattr(server, "_graphql_skip_until", 0.0)  # the skip window ran out
+    await server.lamoda_card("RTLAEJ669901")
+    assert len(calls) == 3
+
+
+async def test_a_graphql_answer_clears_the_refusal_count(monkeypatch):
+    answers = iter([False, True, False])
+
+    async def flaky(sku, ctx):
+        if next(answers):
+            return {"sku": sku, "name": "Бомбер", "brand_name": "X", "price_amount": 100, "sizes": []}
+        server.raise_tool_error(server.TransportDownError("HTTP 403"))
+
+    monkeypatch.setattr(server, "_graphql_card", flaky)
+    _patch_card_page(monkeypatch, CARD_STATE, [])
+    for _ in range(3):
+        await server.lamoda_card("RTLAEJ669901")
+    assert server._graphql_skip_until == 0.0  # refused, answered, refused: never two in a row
+
+
+async def test_search_rows_omit_null_and_empty_fields(monkeypatch):
+    _patch_render(monkeypatch, SEARCH_STATE, [])
+    result = await server.lamoda_search("бомбер")
+    rows = result.model_dump(by_alias=True)["items"]
+    lyle = next(r for r in rows if r["sku"] == "RTLAFO975401")
+    assert "old_price_rub" not in lyle and lyle["loyalty_price_rub"] == 15200.0
+    assert all(v is not None and v != [] for row in rows for v in row.values())
+    assert result.items[0].old_price_rub is None  # attribute access is unchanged

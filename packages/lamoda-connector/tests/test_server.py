@@ -58,6 +58,7 @@ def _no_cache(monkeypatch):
     # everyone to distrust the timings.
     monkeypatch.setattr(server, "_min_gap", 0.0)
     server._pacer.reset()
+    server._graphql_ok()
 
 
 def _patch_graphql(monkeypatch, product):

@@ -4,13 +4,13 @@
     "compare-mcp": {
       "script": "compare-mcp",
       "tool_count": 4,
-      "wire_tokens": 2023,
-      "latency_ms": 1721.9,
-      "schema_sha256": "1a86ba7d05a2da14a588b5cbf3c6553a06c1e9dee7bfc992ed755b48df89dd51",
+      "wire_tokens": 2156,
+      "latency_ms": 813.7,
+      "schema_sha256": "8309b84c3fd02bd7e13f6452a31e0e3f126f8ba1fc266978125e314a38cd9107",
       "tools": [
         {
           "name": "compare_browser_snapshot",
-          "tokens": 370
+          "tokens": 500
         },
         {
           "name": "compare_prices",
@@ -18,7 +18,7 @@
         },
         {
           "name": "compare_sources",
-          "tokens": 250
+          "tokens": 253
         },
         {
           "name": "compare_verify_offer",
@@ -29,13 +29,13 @@
     "decision-mcp": {
       "script": "decision-mcp",
       "tool_count": 5,
-      "wire_tokens": 2278,
-      "latency_ms": 1720.7,
-      "schema_sha256": "2f230ff34a3e15fda8491614fdb12a46a868e27fa180a03840e30b4ad6f08d4a",
+      "wire_tokens": 2411,
+      "latency_ms": 655.9,
+      "schema_sha256": "d8e127c28f55c2eaf05a395dcb4928f5ba8da67b19155e9c47d3a88dd6156eb7",
       "tools": [
         {
           "name": "compare_browser_snapshot",
-          "tokens": 370
+          "tokens": 500
         },
         {
           "name": "compare_prices",
@@ -43,7 +43,7 @@
         },
         {
           "name": "compare_sources",
-          "tokens": 250
+          "tokens": 253
         },
         {
           "name": "compare_verify_offer",
@@ -57,10 +57,10 @@
     },
     "marketplace-mcp": {
       "script": "marketplace-mcp",
-      "tool_count": 40,
-      "wire_tokens": 16549,
-      "latency_ms": 1793.6,
-      "schema_sha256": "2f22553e7ad814641ffba1ac877ca35451c425203ecf362ac83f5c689a7e3870",
+      "tool_count": 41,
+      "wire_tokens": 17868,
+      "latency_ms": 694.9,
+      "schema_sha256": "852f88cf8778cd3a200f5c9f58ed432095f539dd526eb3b8caaa7d2665fade80",
       "tools": [
         {
           "name": "aliexpress_card",
@@ -100,7 +100,7 @@
         },
         {
           "name": "compare_browser_snapshot",
-          "tokens": 370
+          "tokens": 500
         },
         {
           "name": "compare_prices",
@@ -108,7 +108,7 @@
         },
         {
           "name": "compare_sources",
-          "tokens": 250
+          "tokens": 253
         },
         {
           "name": "compare_verify_offer",
@@ -136,11 +136,15 @@
         },
         {
           "name": "lamoda_card",
-          "tokens": 276
+          "tokens": 479
+        },
+        {
+          "name": "lamoda_images",
+          "tokens": 452
         },
         {
           "name": "lamoda_search",
-          "tokens": 253
+          "tokens": 737
         },
         {
           "name": "marketplace_sources",
@@ -184,7 +188,7 @@
         },
         {
           "name": "wb_card",
-          "tokens": 384
+          "tokens": 387
         },
         {
           "name": "wb_categories",
@@ -192,7 +196,7 @@
         },
         {
           "name": "wb_category_products",
-          "tokens": 691
+          "tokens": 694
         },
         {
           "name": "wb_questions",
@@ -220,7 +224,7 @@
         },
         {
           "name": "yandex_search",
-          "tokens": 664
+          "tokens": 705
         }
       ]
     }

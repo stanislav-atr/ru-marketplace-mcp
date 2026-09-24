@@ -22,13 +22,19 @@ size) with counts. Discovery runs in the operator's Chrome over CDP.
   old_price_rub, loyalty_price_rub, sizes_in_stock, image_url, url; the
   response carries total_found, pages and `facets` (colours, sizes, top
   brands, with counts) to refine by.
-- `lamoda_images(skus, photos_per_item?, size?)` — up to 12 products' photos as
-  images, each labelled `#n SKU brand colour`. Needs a vision-capable model.
+- `lamoda_images(skus, photos_per_item?, size?, layout?)` — up to 12 products'
+  photos, by default as one grid image whose tiles are labelled `#n SKU`; the
+  JSON index maps `n` to brand, title and colour. `layout="separate"` sends one
+  image per photo. Needs a vision-capable model.
 - `lamoda_card(sku_or_url, detail?)` — `detail=true` reads the product page:
   colour, gallery, description, composition/season/lengths (`attributes`),
   per-size stock and body measurements, the same model in other colours,
   rating. Without detail it asks the light GraphQL endpoint (price, brand,
-  sizes) and falls back to the page when that is blocked.
+  sizes) and falls back to the page when that is blocked; after two refusals
+  in a row GraphQL is skipped for ten minutes (`graphql_tier_skipped`).
+  Detailed cards stay lean: three photo URLs, no duplicate attributes, and
+  measurements only for sizes in stock. Several cards are best requested as
+  parallel calls in one turn — they queue for Chrome without timing out.
 
 **Not an MCP tool:** `lamoda_selfcheck()` probes search and card. It is CLI-only —
 `marketplace-mcp doctor lamoda` runs it.
@@ -56,7 +62,9 @@ size) with counts. Discovery runs in the operator's Chrome over CDP.
 
 ## Gotchas
 - A missing price is `null`, never `0`: `price_rub: null` means Lamoda had no
-  usable price — treat it as no data, never as a free item.
+  usable price — treat it as no data, never as a free item. Search rows, sizes
+  and other-colour rows omit null and empty fields: an absent field is the same
+  "no data" as a null one.
 - `price_rub` is the everyday price with public sales applied.
   `loyalty_price_rub` is Lamoda Club only, never the everyday price.
 - An unknown colour name is `bad_request` listing the known families; it is
