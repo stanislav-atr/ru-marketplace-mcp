@@ -23,6 +23,11 @@ class LamodaSettings(BaseSettings):
     min_gap: float = Field(default=3.0, ge=0)
     cache_ttl: float = Field(default=120.0, ge=0, description="Seconds to cache upstream reads. 0 disables caching.")
     max_body_bytes: int = Field(default=_DEFAULT_MAX_BODY_BYTES, gt=0)
+    seen_path: str = Field(
+        default="~/.cache/ru-marketplace-mcp/lamoda_seen.json",
+        description="Where the SKUs search and card have seen (title, brand, photo paths) survive a "
+        "server restart, so lamoda_images needs no page loads for them. Empty keeps them in memory only.",
+    )
     proxy: SecretStr = Field(
         default=SecretStr(""),
         description=(

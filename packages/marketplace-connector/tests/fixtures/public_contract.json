@@ -907,15 +907,10 @@
         "category": {
           "anyOf": [
             {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ],
-              "maxLength": 80
+              "type": "string"
+            },
+            {
+              "type": "integer"
             },
             {
               "type": "null"

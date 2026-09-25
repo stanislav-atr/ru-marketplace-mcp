@@ -56,6 +56,11 @@
   Lamoda's order does not follow the brief.
 - Lamoda ID inputs (`category`, colour, brand, material... IDs) accept JSON
   numbers: clients send "479" as 479, which the string-only schema refused.
+  Tested through the MCP layer, which a length constraint had still broken.
+- The SKUs Lamoda search and card have seen persist to
+  `~/.cache/ru-marketplace-mcp/lamoda_seen.json` (`LAMODA_SEEN_PATH`; empty
+  disables), so after a server restart `lamoda_images` still needs no page
+  loads — before, each photo cost a product page and a sheet timed out.
 
 - Lamoda prices separate the everyday price from the Lamoda Club member price
   (`loyalty_price_rub`), the same rule as Yandex Plus. Search previously read

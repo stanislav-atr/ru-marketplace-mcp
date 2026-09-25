@@ -66,7 +66,9 @@ size) with counts. Discovery runs in the operator's Chrome over CDP.
    so cutting at any row loses matches in proportion. Pick colour families
    **wide**: labels are seller-assigned and coarse (on 2026-09-25 only 42% of
    синий was deep navy; olive greens were filed under хаки, зеленый held sage
-   and teal). Leave `limit` unset.
+   and teal). Leave `limit` unset. Run `all_pages` searches **one at a time**:
+   parallel ones queue for Chrome and time out in the client. A pool over
+   ~60k characters may reach you as a saved file; read it, don't re-run.
 3. **Look before choosing**: photograph every candidate with `lamoda_images`,
    12 per sheet, calls in parallel. Sort into match / borderline / reject by
    the photo; the label is only a family, and the photo decides the shade.

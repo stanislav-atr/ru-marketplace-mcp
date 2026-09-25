@@ -25,6 +25,7 @@ FILTERED_STATE = json.loads((FIXTURES / "search_state_filtered_live.json").read_
 def _clean(monkeypatch):
     server._cache._data.clear()
     server._seen.clear()
+    monkeypatch.setattr(server, "_seen_path", None)
     monkeypatch.setattr(server, "_min_gap", 0.0)
     server._pacer.reset()
     server._graphql_ok()
@@ -368,6 +369,31 @@ async def test_numeric_ids_are_accepted_as_numbers(monkeypatch):
     await server.lamoda_search("ветровка", category=479, colors=[643], materials=[19])
     assert urls[0].startswith("https://www.lamoda.ru/c/479/catalog/")
     assert "colors=643" in urls[0] and "base_materials=19" in urls[0]
+
+
+async def test_numeric_ids_pass_the_mcp_layer(monkeypatch):
+    """The schema, not just the function: "479" arrives as 479 from real clients."""
+    from fastmcp import Client
+
+    urls: list = []
+    _patch_render(monkeypatch, FILTERED_STATE, urls)
+    async with Client(server.mcp) as client:
+        result = await client.call_tool(
+            "lamoda_search", {"query": "ветровка", "category": 479, "colors": [643], "materials": [19]}
+        )
+    assert not result.is_error
+    assert urls[0].startswith("https://www.lamoda.ru/c/479/catalog/")
+
+
+async def test_seen_skus_survive_a_server_restart(monkeypatch, tmp_path):
+    """A restart must not turn every photo into a product-page load."""
+    monkeypatch.setattr(server, "_seen_path", tmp_path / "seen.json")
+    _patch_render(monkeypatch, SEARCH_STATE, [])
+    await server.lamoda_search("бомбер")
+    sku = SEARCH_STATE["products"][0]["sku"].upper()
+    server._seen.clear()
+    server._load_seen()
+    assert server._seen[sku]["gallery"]
 
 
 async def test_a_state_with_no_products_is_an_empty_result_not_drift(monkeypatch):

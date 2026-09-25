@@ -33,6 +33,7 @@ import time
 import urllib.parse
 from collections import OrderedDict
 from collections.abc import Callable
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import httpx
@@ -444,8 +445,38 @@ async def _cdp_render_search(
 
 # What search and card have seen, so lamoda_images can show a SKU without
 # another page load. Bounded: an MCP session can browse thousands of SKUs.
+# Kept on disk too: a client timeout can restart the server, and without it
+# every photo then cost a product-page load (~7 s each; 2026-09-25).
 _SEEN_MAX = 3000
 _seen: OrderedDict[str, dict[str, Any]] = OrderedDict()
+_seen_path: Path | None = Path(_settings.seen_path).expanduser() if _settings.seen_path else None
+
+
+def _load_seen() -> None:
+    if _seen_path is None or not _seen_path.is_file():
+        return
+    try:
+        data = json.loads(_seen_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    for sku, entry in data.items() if isinstance(data, dict) else []:
+        if isinstance(sku, str) and isinstance(entry, dict):
+            _seen[sku] = entry
+
+
+def _save_seen() -> None:
+    if _seen_path is None:
+        return
+    try:
+        _seen_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = _seen_path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(_seen, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(_seen_path)
+    except OSError:
+        pass  # a cache: losing it costs page loads, never an answer
+
+
+_load_seen()
 
 
 def _remember(sku: str, **fields: Any) -> None:
@@ -629,7 +660,6 @@ async def lamoda_search(
         Field(
             description="Lamoda category ID or title ('Верхняя одежда', 'Рубашки'); scopes to that subtree and "
             "its gender. facets.categories lists the next level down with IDs.",
-            max_length=80,
         ),
     ] = None,
     materials: Annotated[
@@ -754,6 +784,8 @@ async def lamoda_search(
         category_title: str | None = None
         category_name = str(category).strip() if category is not None else None
         category_name = category_name or None
+        if category_name and len(category_name) > 80:
+            raise_tool_error(BadRequestError("category is at most 80 characters"))
         if category_name and catalog.is_filter_id(category_name):
             category_id, category_name = category_name, None
         text = query.strip()
@@ -893,6 +925,7 @@ async def lamoda_search(
                     price_rub=row["price_rub"],
                     gallery=[p for p in product.get("gallery") or [] if isinstance(p, str)],
                 )
+            _save_seen()
             pagination = state.get("pagination") if isinstance(state, dict) else None
             pagination = pagination if isinstance(pagination, dict) else {}
             result = LamodaSearchResponse(
@@ -1050,6 +1083,7 @@ async def lamoda_card(
                         price_rub=result.price_rub,
                         gallery=gallery,
                     )
+                    _save_seen()
                 else:
                     if time.monotonic() < _graphql_skip_until:
                         warnings.append("graphql_tier_skipped: refused recently")
