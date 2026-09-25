@@ -1,0 +1,1375 @@
+{
+ "captured_at": "2026-09-25",
+ "method": "Claude's judgment from the main 236x341 photo on lamoda_images contact sheets, full coverage of both baseline pools",
+ "targets": {
+  "navy": {
+   "hex": "#1E2638",
+   "query": "ветровка с капюшоном; men; Верхняя одежда; синий; однотонный; демисезон"
+  },
+  "olive": {
+   "hex": "#5A5B3C",
+   "rule": "green-first, not khaki",
+   "query": "куртка-рубашка; men; хаки+зеленый; хлопок"
+  }
+ },
+ "navy": [
+  {
+   "sku": "RTLAFP109301",
+   "label": "синий",
+   "verdict": "match",
+   "row": 0
+  },
+  {
+   "sku": "MP002XM0170T",
+   "label": "синий",
+   "verdict": "match",
+   "row": 1
+  },
+  {
+   "sku": "MP002XM0RIW5",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 2
+  },
+  {
+   "sku": "RTLAFP109501",
+   "label": "синий",
+   "verdict": "match",
+   "row": 3
+  },
+  {
+   "sku": "RTLAFO976601",
+   "label": "синий",
+   "verdict": "match",
+   "row": 4
+  },
+  {
+   "sku": "RTLAFB213801",
+   "label": "синий",
+   "verdict": "match",
+   "row": 5
+  },
+  {
+   "sku": "MP002XM0CYUU",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 6
+  },
+  {
+   "sku": "RTLAFL092301",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 7
+  },
+  {
+   "sku": "RTLAES340201",
+   "label": "синий",
+   "verdict": "match",
+   "row": 8
+  },
+  {
+   "sku": "MP002XM0CYW4",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 9
+  },
+  {
+   "sku": "MP002XM02GVG",
+   "label": "синий",
+   "verdict": "match",
+   "row": 10
+  },
+  {
+   "sku": "RTLAFQ551701",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 11
+  },
+  {
+   "sku": "MP002XM0RL3C",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 12
+  },
+  {
+   "sku": "RTLAFJ989201",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 13
+  },
+  {
+   "sku": "MP002XM0MQ0H",
+   "label": "синий",
+   "verdict": "match",
+   "row": 14
+  },
+  {
+   "sku": "MP002XM0RIW6",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 15
+  },
+  {
+   "sku": "MP002XM02GVB",
+   "label": "синий",
+   "verdict": "match",
+   "row": 16
+  },
+  {
+   "sku": "MP002XM0CUOR",
+   "label": "синий",
+   "verdict": "match",
+   "row": 17
+  },
+  {
+   "sku": "MP002XM08X1G",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 18
+  },
+  {
+   "sku": "RTLAFL092401",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 19
+  },
+  {
+   "sku": "MP002XM0WFWS",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 20
+  },
+  {
+   "sku": "MP002XM05V1I",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 21
+  },
+  {
+   "sku": "RTLAFL088601",
+   "label": "синий",
+   "verdict": "match",
+   "row": 22
+  },
+  {
+   "sku": "RTLAFG577201",
+   "label": "синий",
+   "verdict": "match",
+   "row": 23
+  },
+  {
+   "sku": "MP002XM0DN97",
+   "label": "синий",
+   "verdict": "match",
+   "row": 24
+  },
+  {
+   "sku": "MP002XM254R3",
+   "label": "синий",
+   "verdict": "match",
+   "row": 25
+  },
+  {
+   "sku": "MP002XM01031",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 26
+  },
+  {
+   "sku": "MP002XM006JS",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 27
+  },
+  {
+   "sku": "XD001XM01UC1",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 28
+  },
+  {
+   "sku": "MP002XM00UEM",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 29
+  },
+  {
+   "sku": "MP002XM019IW",
+   "label": "синий",
+   "verdict": "match",
+   "row": 30
+  },
+  {
+   "sku": "MP002XM0WF3K",
+   "label": "синий",
+   "verdict": "match",
+   "row": 31
+  },
+  {
+   "sku": "MP002XM0CYUC",
+   "label": "синий",
+   "verdict": "match",
+   "row": 32
+  },
+  {
+   "sku": "XD001XM01WFL",
+   "label": "синий",
+   "verdict": "match",
+   "row": 33
+  },
+  {
+   "sku": "RTLAFQ501101",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 34
+  },
+  {
+   "sku": "MP002XM0D10W",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 35
+  },
+  {
+   "sku": "MP002XM02BI6",
+   "label": "синий",
+   "verdict": "match",
+   "row": 36
+  },
+  {
+   "sku": "MP002XM0CJ53",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 37
+  },
+  {
+   "sku": "MP002XM02HJM",
+   "label": "синий",
+   "verdict": "match",
+   "row": 38
+  },
+  {
+   "sku": "MP002XM0CXS6",
+   "label": "синий",
+   "verdict": "match",
+   "row": 39
+  },
+  {
+   "sku": "RTLAFO935601",
+   "label": "синий",
+   "verdict": "match",
+   "row": 40
+  },
+  {
+   "sku": "MP002XM0BRJH",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 41
+  },
+  {
+   "sku": "MP002XM0WFWU",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 42
+  },
+  {
+   "sku": "XD001XM00Z4Z",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 43
+  },
+  {
+   "sku": "MP002XM02EID",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 44
+  },
+  {
+   "sku": "MP002XM22RUP",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 45
+  },
+  {
+   "sku": "RTLAFF264701",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 46
+  },
+  {
+   "sku": "MP002XM01TTW",
+   "label": "синий",
+   "verdict": "match",
+   "row": 47
+  },
+  {
+   "sku": "XD001XM01T5S",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 48
+  },
+  {
+   "sku": "MP002XM022TV",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 49
+  },
+  {
+   "sku": "MP002XM00DS6",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 50
+  },
+  {
+   "sku": "MP002XM024CA",
+   "label": "синий",
+   "verdict": "match",
+   "row": 51
+  },
+  {
+   "sku": "MP002XM0VTEO",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 52
+  },
+  {
+   "sku": "RTLAFN872801",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 53
+  },
+  {
+   "sku": "RTLAFN870701",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 54
+  },
+  {
+   "sku": "XD001XM00QLT",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 55
+  },
+  {
+   "sku": "MP002XM02860",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 56
+  },
+  {
+   "sku": "RTLAES922501",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 57
+  },
+  {
+   "sku": "MP002XM0CV1Z",
+   "label": "синий",
+   "verdict": "match",
+   "row": 58
+  },
+  {
+   "sku": "RTLAFG546101",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 59
+  },
+  {
+   "sku": "MP002XM01IQ7",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 60
+  },
+  {
+   "sku": "MP002XM0DJO3",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 61
+  },
+  {
+   "sku": "MP002XM0DB25",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 62
+  },
+  {
+   "sku": "RTLAFE959701",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 63
+  },
+  {
+   "sku": "MP002XM22RVP",
+   "label": "синий",
+   "verdict": "match",
+   "row": 64
+  },
+  {
+   "sku": "RTLAFP859301",
+   "label": "синий",
+   "verdict": "match",
+   "row": 65
+  },
+  {
+   "sku": "MP002XM22Q4Q",
+   "label": "синий",
+   "verdict": "match",
+   "row": 66
+  },
+  {
+   "sku": "MP002XM0CVWX",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 67
+  },
+  {
+   "sku": "MP002XM0RLRM",
+   "label": "синий",
+   "verdict": "match",
+   "row": 68
+  },
+  {
+   "sku": "RTLAEZ883702",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 69
+  },
+  {
+   "sku": "XD001XM00DQ4",
+   "label": "синий",
+   "verdict": "match",
+   "row": 70
+  },
+  {
+   "sku": "MP002XM0CO95",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 71
+  },
+  {
+   "sku": "XD001XM01KIS",
+   "label": "синий",
+   "verdict": "match",
+   "row": 72
+  },
+  {
+   "sku": "MP002XM1R1U4",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 73
+  },
+  {
+   "sku": "MP002XM00JUD",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 74
+  },
+  {
+   "sku": "MP002XM019IO",
+   "label": "синий",
+   "verdict": "match",
+   "row": 75
+  },
+  {
+   "sku": "MP002XM00OWU",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 76
+  },
+  {
+   "sku": "MP002XM22OGH",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 77
+  },
+  {
+   "sku": "MP002XM0D42R",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 78
+  },
+  {
+   "sku": "MP002XM01LXN",
+   "label": "синий",
+   "verdict": "match",
+   "row": 79
+  },
+  {
+   "sku": "MP002XM0RQR6",
+   "label": "синий",
+   "verdict": "match",
+   "row": 80
+  },
+  {
+   "sku": "RTLAEV050601",
+   "label": "синий",
+   "verdict": "match",
+   "row": 81
+  },
+  {
+   "sku": "RTLAFL647401",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 82
+  },
+  {
+   "sku": "XD001XM00BIB",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 83
+  },
+  {
+   "sku": "MP002XM00IXA",
+   "label": "синий",
+   "verdict": "match",
+   "row": 84
+  },
+  {
+   "sku": "RTLAFD034901",
+   "label": "синий",
+   "verdict": "match",
+   "row": 85
+  },
+  {
+   "sku": "MP002XM004TC",
+   "label": "синий",
+   "verdict": "match",
+   "row": 86
+  },
+  {
+   "sku": "XD001XM010IY",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 87
+  },
+  {
+   "sku": "XD001XM01IJG",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 88
+  },
+  {
+   "sku": "MP002XM0VTEP",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 89
+  },
+  {
+   "sku": "MP002XM0C454",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 90
+  },
+  {
+   "sku": "MP002XM0DIYM",
+   "label": "синий",
+   "verdict": "match",
+   "row": 91
+  },
+  {
+   "sku": "MP002XM0CC6Q",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 92
+  },
+  {
+   "sku": "MP002XM0CYU8",
+   "label": "синий",
+   "verdict": "match",
+   "row": 93
+  },
+  {
+   "sku": "MP002XM0BV52",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 94
+  },
+  {
+   "sku": "MP002XM0MYR9",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 95
+  },
+  {
+   "sku": "MP002XM001W5",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 96
+  },
+  {
+   "sku": "MP002XM251NG",
+   "label": "синий",
+   "verdict": "match",
+   "row": 97
+  },
+  {
+   "sku": "MP002XM019IU",
+   "label": "синий",
+   "verdict": "match",
+   "row": 98
+  },
+  {
+   "sku": "MP002XM0DUMR",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 99
+  },
+  {
+   "sku": "MP002XM0CDGI",
+   "label": "синий",
+   "verdict": "match",
+   "row": 100
+  },
+  {
+   "sku": "MP002XM0CYW5",
+   "label": "синий",
+   "verdict": "match",
+   "row": 101
+  },
+  {
+   "sku": "MP002XM1GWO3",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 102
+  },
+  {
+   "sku": "MP002XM0CXIG",
+   "label": "синий",
+   "verdict": "match",
+   "row": 103
+  },
+  {
+   "sku": "XD001XM01WSA",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 104
+  },
+  {
+   "sku": "XD001XM01TNE",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 105
+  },
+  {
+   "sku": "XD001XM01ZLR",
+   "label": "синий",
+   "verdict": "no_photo",
+   "row": 106
+  },
+  {
+   "sku": "RTLAFM170601",
+   "label": "синий",
+   "verdict": "match",
+   "row": 107
+  },
+  {
+   "sku": "MP002XM01IZI",
+   "label": "синий",
+   "verdict": "match",
+   "row": 108
+  },
+  {
+   "sku": "XD001XM009LA",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 109
+  },
+  {
+   "sku": "RTLAFB082101",
+   "label": "синий",
+   "verdict": "match",
+   "row": 110
+  },
+  {
+   "sku": "MP002XM22MNE",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 111
+  },
+  {
+   "sku": "RTLAFH394601",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 112
+  },
+  {
+   "sku": "MP002XM0DUMO",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 113
+  },
+  {
+   "sku": "MP002XM22TMW",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 114
+  },
+  {
+   "sku": "MP002XM00HQ9",
+   "label": "синий",
+   "verdict": "match",
+   "row": 115
+  },
+  {
+   "sku": "RTLAFF731201",
+   "label": "синий",
+   "verdict": "match",
+   "row": 116
+  },
+  {
+   "sku": "MP002XM0BOD1",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 117
+  },
+  {
+   "sku": "RTLAFD130901",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 118
+  },
+  {
+   "sku": "RTLAER940801",
+   "label": "синий",
+   "verdict": "match",
+   "row": 119
+  },
+  {
+   "sku": "RTLAFC568801",
+   "label": "синий",
+   "verdict": "match",
+   "row": 120
+  },
+  {
+   "sku": "MP002XM0RV41",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 121
+  },
+  {
+   "sku": "RTLAEZ883701",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 122
+  },
+  {
+   "sku": "XD001XM01G77",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 123
+  },
+  {
+   "sku": "XD001XM01KIY",
+   "label": "синий",
+   "verdict": "match",
+   "row": 124
+  },
+  {
+   "sku": "MP002XM1H2K9",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 125
+  },
+  {
+   "sku": "RTLAFI632801",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 126
+  },
+  {
+   "sku": "MP002XM22NVM",
+   "label": "синий",
+   "verdict": "match",
+   "row": 127
+  },
+  {
+   "sku": "MP002XM02652",
+   "label": "синий",
+   "verdict": "match",
+   "row": 128
+  },
+  {
+   "sku": "MP002XM25D1L",
+   "label": "синий",
+   "verdict": "match",
+   "row": 129
+  },
+  {
+   "sku": "MP002XM02DD5",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 130
+  },
+  {
+   "sku": "MP002XM0D9F3",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 131
+  },
+  {
+   "sku": "MP002XM0WEJN",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 132
+  },
+  {
+   "sku": "RTLAFA181401",
+   "label": "синий",
+   "verdict": "match",
+   "row": 133
+  },
+  {
+   "sku": "RTLAEY330101",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 134
+  },
+  {
+   "sku": "MP002XM0WEJL",
+   "label": "синий",
+   "verdict": "match",
+   "row": 135
+  },
+  {
+   "sku": "RTLAFI327101",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 136
+  },
+  {
+   "sku": "MP002XM0N8XO",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 137
+  },
+  {
+   "sku": "XD001XM00T8S",
+   "label": "синий",
+   "verdict": "match",
+   "row": 138
+  },
+  {
+   "sku": "RTLAFD061501",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 139
+  },
+  {
+   "sku": "RTLAEB268601",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 140
+  },
+  {
+   "sku": "XD001XM0270X",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 141
+  },
+  {
+   "sku": "RTLAFK315801",
+   "label": "синий",
+   "verdict": "match",
+   "row": 142
+  },
+  {
+   "sku": "MP002XM0BUBR",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 143
+  },
+  {
+   "sku": "RTLAFK061301",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 144
+  },
+  {
+   "sku": "MP002XM0D1J9",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 145
+  },
+  {
+   "sku": "RTLADV926401",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 146
+  },
+  {
+   "sku": "XD001XM01WSC",
+   "label": "синий",
+   "verdict": "match",
+   "row": 147
+  },
+  {
+   "sku": "MP002XM0D383",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 148
+  },
+  {
+   "sku": "MP002XM02B62",
+   "label": "синий",
+   "verdict": "match",
+   "row": 149
+  },
+  {
+   "sku": "RTLAFN286201",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 150
+  },
+  {
+   "sku": "MP002XM22QD8",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 151
+  },
+  {
+   "sku": "MP002XM22LMQ",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 152
+  },
+  {
+   "sku": "MP002XM0BUCV",
+   "label": "синий",
+   "verdict": "match",
+   "row": 153
+  },
+  {
+   "sku": "XD001XM01ED3",
+   "label": "синий",
+   "verdict": "match",
+   "row": 154
+  },
+  {
+   "sku": "MP002XM0MZAV",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 155
+  },
+  {
+   "sku": "XD001XM01WMN",
+   "label": "синий",
+   "verdict": "match",
+   "row": 156
+  },
+  {
+   "sku": "MP002XM0D2IP",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 157
+  },
+  {
+   "sku": "MP002XM0X2JP",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 158
+  },
+  {
+   "sku": "XD001XM00SCM",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 159
+  },
+  {
+   "sku": "RTLAFJ943301",
+   "label": "синий",
+   "verdict": "match",
+   "row": 160
+  },
+  {
+   "sku": "MP002XM00310",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 161
+  },
+  {
+   "sku": "MP002XM0MYS5",
+   "label": "синий",
+   "verdict": "match",
+   "row": 162
+  },
+  {
+   "sku": "MP002XM00IL2",
+   "label": "синий",
+   "verdict": "match",
+   "row": 163
+  },
+  {
+   "sku": "XD001XM01WSD",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 164
+  },
+  {
+   "sku": "RTLAFH771601",
+   "label": "синий",
+   "verdict": "match",
+   "row": 165
+  },
+  {
+   "sku": "RTLAFG664201",
+   "label": "синий",
+   "verdict": "match",
+   "row": 166
+  },
+  {
+   "sku": "XD001XM01WNZ",
+   "label": "синий",
+   "verdict": "match",
+   "row": 167
+  },
+  {
+   "sku": "XD001XM00DAQ",
+   "label": "синий",
+   "verdict": "match",
+   "row": 168
+  },
+  {
+   "sku": "MP002XM00BPA",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 169
+  },
+  {
+   "sku": "MP002XM08TC6",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 170
+  },
+  {
+   "sku": "MP002XM00OXM",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 171
+  },
+  {
+   "sku": "XD001XM01WDG",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 172
+  },
+  {
+   "sku": "RTLADS160502",
+   "label": "синий",
+   "verdict": "match",
+   "row": 173
+  },
+  {
+   "sku": "XD001XM01STB",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 174
+  },
+  {
+   "sku": "MP002XM0BUD0",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 175
+  },
+  {
+   "sku": "RTLADW022801",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 176
+  },
+  {
+   "sku": "XD001XM00T8Y",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 177
+  },
+  {
+   "sku": "MP002XM1UG7G",
+   "label": "синий",
+   "verdict": "borderline",
+   "row": 178
+  },
+  {
+   "sku": "XD001XM017DP",
+   "label": "синий",
+   "verdict": "reject",
+   "row": 179
+  },
+  {
+   "sku": "XD001XM01K9G",
+   "label": "синий",
+   "verdict": "match",
+   "row": 180
+  },
+  {
+   "sku": "MP002XM01OX3",
+   "label": "синий",
+   "verdict": "match",
+   "row": 181
+  },
+  {
+   "sku": "RTLAEW391001",
+   "label": "синий",
+   "verdict": "match",
+   "row": 182
+  },
+  {
+   "sku": "MP002XM0CNJ1",
+   "label": "синий",
+   "verdict": "match",
+   "row": 183
+  }
+ ],
+ "olive": [
+  {
+   "sku": "RTLAFM652701",
+   "label": "зеленый",
+   "verdict": "borderline",
+   "row": 0
+  },
+  {
+   "sku": "RTLAFK206001",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 1
+  },
+  {
+   "sku": "MP002XM0CZ8C",
+   "label": "хаки",
+   "verdict": "reject",
+   "row": 2
+  },
+  {
+   "sku": "RTLAEW091401",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 3
+  },
+  {
+   "sku": "RTLAFE443901",
+   "label": "хаки",
+   "verdict": "borderline",
+   "row": 4
+  },
+  {
+   "sku": "RTLAER149401",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 5
+  },
+  {
+   "sku": "RTLAFA977202",
+   "label": "хаки",
+   "verdict": "match",
+   "row": 6
+  },
+  {
+   "sku": "MP002XM22L7C",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 7
+  },
+  {
+   "sku": "MP002XM08FZP",
+   "label": "зеленый",
+   "verdict": "match",
+   "row": 8
+  },
+  {
+   "sku": "MP002XM0D006",
+   "label": "хаки",
+   "verdict": "reject",
+   "row": 9
+  },
+  {
+   "sku": "RTLAFN928901",
+   "label": "хаки",
+   "verdict": "reject",
+   "row": 10
+  },
+  {
+   "sku": "RTLAFJ986801",
+   "label": "хаки",
+   "verdict": "match",
+   "row": 11
+  },
+  {
+   "sku": "RTLAFL545201",
+   "label": "хаки",
+   "verdict": "match",
+   "row": 12
+  },
+  {
+   "sku": "RTLAEY861801",
+   "label": "хаки",
+   "verdict": "borderline",
+   "row": 13
+  },
+  {
+   "sku": "RTLAFM907101",
+   "label": "хаки",
+   "verdict": "multicolor",
+   "row": 14
+  },
+  {
+   "sku": "MP002XM0RK4E",
+   "label": "хаки",
+   "verdict": "match",
+   "row": 15
+  },
+  {
+   "sku": "MP002XM0N8XS",
+   "label": "хаки",
+   "verdict": "borderline",
+   "row": 16
+  },
+  {
+   "sku": "RTLAEV388401",
+   "label": "хаки",
+   "verdict": "reject",
+   "row": 17
+  },
+  {
+   "sku": "MP002XM0X8GT",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 18
+  },
+  {
+   "sku": "RTLAFM876501",
+   "label": "хаки",
+   "verdict": "borderline",
+   "row": 19
+  },
+  {
+   "sku": "MP002XM02HTF",
+   "label": "хаки",
+   "verdict": "match",
+   "row": 20
+  },
+  {
+   "sku": "RTLAFF002101",
+   "label": "хаки",
+   "verdict": "match",
+   "row": 21
+  },
+  {
+   "sku": "RTLAFO750301",
+   "label": "хаки",
+   "verdict": "reject",
+   "row": 22
+  },
+  {
+   "sku": "MP002XM0X2EA",
+   "label": "хаки",
+   "verdict": "match",
+   "row": 23
+  },
+  {
+   "sku": "MP002XM00TX5",
+   "label": "хаки",
+   "verdict": "reject",
+   "row": 24
+  },
+  {
+   "sku": "MP002XM0RRC2",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 25
+  },
+  {
+   "sku": "MP002XM0MQCC",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 26
+  },
+  {
+   "sku": "MP002XU01B9I",
+   "label": "зеленый,хаки",
+   "verdict": "borderline",
+   "row": 27
+  },
+  {
+   "sku": "MP002XM0RNW6",
+   "label": "зеленый",
+   "verdict": "multicolor",
+   "row": 28
+  },
+  {
+   "sku": "RTLAFH655801",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 29
+  },
+  {
+   "sku": "XD001XM01L9O",
+   "label": "хаки",
+   "verdict": "borderline",
+   "row": 30
+  },
+  {
+   "sku": "RTLAFF392101",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 31
+  },
+  {
+   "sku": "RTLAFM593401",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 32
+  },
+  {
+   "sku": "RTLAFN689201",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 33
+  },
+  {
+   "sku": "MP002XM013I0",
+   "label": "зеленый",
+   "verdict": "borderline",
+   "row": 34
+  },
+  {
+   "sku": "MP002XM01DG3",
+   "label": "хаки",
+   "verdict": "match",
+   "row": 35
+  },
+  {
+   "sku": "XD001XM01FBQ",
+   "label": "хаки",
+   "verdict": "match",
+   "row": 36
+  },
+  {
+   "sku": "MP002XM0CQ9B",
+   "label": "зеленый",
+   "verdict": "multicolor",
+   "row": 37
+  },
+  {
+   "sku": "XD001XM01ROG",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 38
+  },
+  {
+   "sku": "RTLAFK108501",
+   "label": "зеленый",
+   "verdict": "reject",
+   "row": 39
+  },
+  {
+   "sku": "XD001XM01LLM",
+   "label": "зеленый",
+   "verdict": "multicolor",
+   "row": 40
+  },
+  {
+   "sku": "MP002XM1UBXU",
+   "label": "хаки",
+   "verdict": "reject",
+   "row": 41
+  }
+ ]
+}

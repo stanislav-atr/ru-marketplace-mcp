@@ -1,0 +1,542 @@
+{
+ "about": "Photo-based colour judgments by Claude (vision on Lamoda catalogue thumbnails), 2026-09-24. Ground truth for workstream C (target_color ranking). verdict: match | borderline | reject | multicolor. Lamoda labels are seller-assigned families; disagreements with the label are the interesting cases.",
+ "targets": {
+  "navy_deep_#1E2638": "#1E2638",
+  "olive_green_first_#5A5B3C": "#5A5B3C",
+  "navy_harrington_run(no_hex)": null,
+  "olive_harrington_run(no_hex)": null
+ },
+ "items": [
+  {
+   "sku": "RTLAFP109301",
+   "brand": "Springfield",
+   "lamoda_color": "синий",
+   "target": "navy_deep_#1E2638",
+   "verdict": "match",
+   "note": "top pick: matte very dark navy, hooded, 73 cm",
+   "url": "https://www.lamoda.ru/p/rtlafp109301/"
+  },
+  {
+   "sku": "RTLAEW391001",
+   "brand": "Uset",
+   "lamoda_color": "синий",
+   "target": "navy_deep_#1E2638",
+   "verdict": "match",
+   "note": "deep matte navy",
+   "url": "https://www.lamoda.ru/p/rtlaew391001/"
+  },
+  {
+   "sku": "MP002XM01OX3",
+   "brand": "Norppa",
+   "lamoda_color": "синий",
+   "target": "navy_deep_#1E2638",
+   "verdict": "match",
+   "note": "dark navy; long (83 cm) — style miss, colour ok",
+   "url": "https://www.lamoda.ru/p/mp002xm01ox3/"
+  },
+  {
+   "sku": "RTLAES169701",
+   "brand": "Helly Hansen",
+   "lamoda_color": "синий",
+   "target": "navy_deep_#1E2638",
+   "verdict": "match",
+   "note": "navy softshell",
+   "url": "https://www.lamoda.ru/p/rtlaes169701/"
+  },
+  {
+   "sku": "MP002XM0170T",
+   "brand": "United Colors of Benetton",
+   "lamoda_color": "синий",
+   "target": "navy_deep_#1E2638",
+   "verdict": "match",
+   "note": "deep navy; parka length",
+   "url": "https://www.lamoda.ru/p/mp002xm0170t/"
+  },
+  {
+   "sku": "MP002XM0COJX",
+   "brand": "Outventure",
+   "lamoda_color": "синий",
+   "target": "navy_deep_#1E2638",
+   "verdict": "borderline",
+   "note": "grey-navy, slightly light",
+   "url": "https://www.lamoda.ru/p/mp002xm0cojx/"
+  },
+  {
+   "sku": "RTLAFQ551701",
+   "brand": "The North Face",
+   "lamoda_color": "синий",
+   "target": "navy_deep_#1E2638",
+   "verdict": "reject",
+   "note": "brighter navy with black shoulders (two-tone)",
+   "url": "https://www.lamoda.ru/p/rtlafq551701/"
+  },
+  {
+   "sku": "MP002XM0RQQP",
+   "brand": "Norppa",
+   "lamoda_color": "синий",
+   "target": "navy_deep_#1E2638",
+   "verdict": "reject",
+   "note": "teal/petrol navy",
+   "url": "https://www.lamoda.ru/p/mp002xm0rqqp/"
+  },
+  {
+   "sku": "MP002XM0D07N",
+   "brand": "Red Fox",
+   "lamoda_color": "синий",
+   "target": "navy_deep_#1E2638",
+   "verdict": "reject",
+   "note": "slate blue",
+   "url": "https://www.lamoda.ru/p/mp002xm0d07n/"
+  },
+  {
+   "sku": "MP002XM0RIW6",
+   "brand": "Maiberg",
+   "lamoda_color": "синий",
+   "target": "navy_deep_#1E2638",
+   "verdict": "reject",
+   "note": "mid blue",
+   "url": "https://www.lamoda.ru/p/mp002xm0riw6/"
+  },
+  {
+   "sku": "RTLAFN870701",
+   "brand": "ASICS",
+   "lamoda_color": "синий",
+   "target": "navy_deep_#1E2638",
+   "verdict": "reject",
+   "note": "cobalt / royal blue",
+   "url": "https://www.lamoda.ru/p/rtlafn870701/"
+  },
+  {
+   "sku": "RTLAFG557001",
+   "brand": "Helly Hansen",
+   "lamoda_color": "синий",
+   "target": "navy_deep_#1E2638",
+   "verdict": "borderline",
+   "note": "navy but white zips/logo",
+   "url": "https://www.lamoda.ru/p/rtlafg557001/"
+  },
+  {
+   "sku": "RTLAFJ986801",
+   "brand": "Peaceful Hooligan",
+   "lamoda_color": "хаки",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "match",
+   "note": "top pick: reads olive-GREEN despite хаки label",
+   "url": "https://www.lamoda.ru/p/rtlafj986801/"
+  },
+  {
+   "sku": "RTLAFM652701",
+   "brand": "Mango Man",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "match",
+   "note": "olive green",
+   "url": "https://www.lamoda.ru/p/rtlafm652701/"
+  },
+  {
+   "sku": "MP002XM0MQCC",
+   "brand": "Marc O'Polo",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "borderline",
+   "note": "grey-green, cooler than target",
+   "url": "https://www.lamoda.ru/p/mp002xm0mqcc/"
+  },
+  {
+   "sku": "MP002XM01ZN0",
+   "brand": "Digel",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "borderline",
+   "note": "mid green, a bit brighter",
+   "url": "https://www.lamoda.ru/p/mp002xm01zn0/"
+  },
+  {
+   "sku": "RTLAFJ880301",
+   "brand": "Champion",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "borderline",
+   "note": "olive leaning khaki-brown",
+   "url": "https://www.lamoda.ru/p/rtlafj880301/"
+  },
+  {
+   "sku": "XD001XM00L12",
+   "brand": "Maison David",
+   "lamoda_color": "хаки",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "match",
+   "note": "dark olive wool",
+   "url": "https://www.lamoda.ru/p/xd001xm00l12/"
+  },
+  {
+   "sku": "XD001XM00WZQ",
+   "brand": "Maison David",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "borderline",
+   "note": "dark grey-olive",
+   "url": "https://www.lamoda.ru/p/xd001xm00wzq/"
+  },
+  {
+   "sku": "MP002XM0CZ8C",
+   "brand": "Tom Tailor",
+   "lamoda_color": "хаки",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "reject",
+   "note": "sage — too light for #5A5B3C",
+   "url": "https://www.lamoda.ru/p/mp002xm0cz8c/"
+  },
+  {
+   "sku": "RTLAER149401",
+   "brand": "Mademan",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "reject",
+   "note": "pale sage — too light despite зеленый label",
+   "url": "https://www.lamoda.ru/p/rtlaer149401/"
+  },
+  {
+   "sku": "MP002XM0X9IT",
+   "brand": "City Race",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "reject",
+   "note": "tan/khaki-brown corduroy despite зеленый label",
+   "url": "https://www.lamoda.ru/p/mp002xm0x9it/"
+  },
+  {
+   "sku": "MP002XM0X906",
+   "brand": "Calliope",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "reject",
+   "note": "olive-brown, reads khaki",
+   "url": "https://www.lamoda.ru/p/mp002xm0x906/"
+  },
+  {
+   "sku": "MP002XM01W15",
+   "brand": "Lacoste",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "reject",
+   "note": "bottle green, not olive",
+   "url": "https://www.lamoda.ru/p/mp002xm01w15/"
+  },
+  {
+   "sku": "MP002XM0X8GT",
+   "brand": "Marc O'Polo",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "reject",
+   "note": "dark forest green",
+   "url": "https://www.lamoda.ru/p/mp002xm0x8gt/"
+  },
+  {
+   "sku": "MP002XM0RRC2",
+   "brand": "Karl Lagerfeld Jeans",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "reject",
+   "note": "forest green",
+   "url": "https://www.lamoda.ru/p/mp002xm0rrc2/"
+  },
+  {
+   "sku": "MP002XM0RQ5P",
+   "brand": "Twister",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "borderline",
+   "note": "very dark olive/charcoal green",
+   "url": "https://www.lamoda.ru/p/mp002xm0rq5p/"
+  },
+  {
+   "sku": "MP002XM01EFV",
+   "brand": "Tom Tailor",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "multicolor",
+   "note": "plaid",
+   "url": "https://www.lamoda.ru/p/mp002xm01efv/"
+  },
+  {
+   "sku": "RTLAEY920601",
+   "brand": "Mango Man",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "multicolor",
+   "note": "check",
+   "url": "https://www.lamoda.ru/p/rtlaey920601/"
+  },
+  {
+   "sku": "RTLAFL675302",
+   "brand": "Officine Generale",
+   "lamoda_color": "хаки",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "multicolor",
+   "note": "plaid",
+   "url": "https://www.lamoda.ru/p/rtlafl675302/"
+  },
+  {
+   "sku": "RTLAFM907101",
+   "brand": "Officine Generale",
+   "lamoda_color": "хаки",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "multicolor",
+   "note": "plaid",
+   "url": "https://www.lamoda.ru/p/rtlafm907101/"
+  },
+  {
+   "sku": "MP002XM0DCF5",
+   "brand": "ET NOS",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "multicolor",
+   "note": "plaid",
+   "url": "https://www.lamoda.ru/p/mp002xm0dcf5/"
+  },
+  {
+   "sku": "MP002XM0RNW6",
+   "brand": "Cleo",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "multicolor",
+   "note": "plaid",
+   "url": "https://www.lamoda.ru/p/mp002xm0rnw6/"
+  },
+  {
+   "sku": "RTLAFG656401",
+   "brand": "Hugo",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "reject",
+   "note": "grey houndstooth",
+   "url": "https://www.lamoda.ru/p/rtlafg656401/"
+  },
+  {
+   "sku": "MP002XU01GZ0",
+   "brand": "SHU",
+   "lamoda_color": "зеленый",
+   "target": "olive_green_first_#5A5B3C",
+   "verdict": "reject",
+   "note": "pale grey-green puffer",
+   "url": "https://www.lamoda.ru/p/mp002xu01gz0/"
+  },
+  {
+   "sku": "RTLAEJ669901",
+   "brand": "Fred Perry",
+   "lamoda_color": "синий",
+   "target": "navy_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "navy",
+   "url": "https://www.lamoda.ru/p/rtlaej669901/"
+  },
+  {
+   "sku": "RTLAFO975401",
+   "brand": "Lyle & Scott",
+   "lamoda_color": "синий",
+   "target": "navy_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "dark navy",
+   "url": "https://www.lamoda.ru/p/rtlafo975401/"
+  },
+  {
+   "sku": "RTLAFO976301",
+   "brand": "Lyle & Scott",
+   "lamoda_color": "синий",
+   "target": "navy_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "dark navy",
+   "url": "https://www.lamoda.ru/p/rtlafo976301/"
+  },
+  {
+   "sku": "RTLAFO986701",
+   "brand": "Lyle & Scott",
+   "lamoda_color": "синий",
+   "target": "navy_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "dark navy",
+   "url": "https://www.lamoda.ru/p/rtlafo986701/"
+  },
+  {
+   "sku": "MP002XM02G4L",
+   "brand": "Tom Tailor",
+   "lamoda_color": "синий",
+   "target": "navy_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "navy",
+   "url": "https://www.lamoda.ru/p/mp002xm02g4l/"
+  },
+  {
+   "sku": "MP002XM0WEEU",
+   "brand": "Tom Tailor",
+   "lamoda_color": "синий",
+   "target": "navy_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "navy",
+   "url": "https://www.lamoda.ru/p/mp002xm0weeu/"
+  },
+  {
+   "sku": "RTLAFP109501",
+   "brand": "Springfield",
+   "lamoda_color": "синий",
+   "target": "navy_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "navy",
+   "url": "https://www.lamoda.ru/p/rtlafp109501/"
+  },
+  {
+   "sku": "RTLAEZ100201",
+   "brand": "Calvin Klein",
+   "lamoda_color": "синий",
+   "target": "navy_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "navy",
+   "url": "https://www.lamoda.ru/p/rtlaez100201/"
+  },
+  {
+   "sku": "RTLAEO084601",
+   "brand": "Lonsdale",
+   "lamoda_color": "синий",
+   "target": "navy_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "navy",
+   "url": "https://www.lamoda.ru/p/rtlaeo084601/"
+  },
+  {
+   "sku": "RTLAFM658701",
+   "brand": "Mango Man",
+   "lamoda_color": "синий",
+   "target": "navy_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "dark navy-teal, corduroy collar",
+   "url": "https://www.lamoda.ru/p/rtlafm658701/"
+  },
+  {
+   "sku": "MP002XM00UDY",
+   "brand": "s.Oliver",
+   "lamoda_color": "синий",
+   "target": "navy_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "navy",
+   "url": "https://www.lamoda.ru/p/mp002xm00udy/"
+  },
+  {
+   "sku": "MP002XM0DF1E",
+   "brand": "Maiberg",
+   "lamoda_color": "синий",
+   "target": "navy_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "navy",
+   "url": "https://www.lamoda.ru/p/mp002xm0df1e/"
+  },
+  {
+   "sku": "RTLAEZ292001",
+   "brand": "Springfield",
+   "lamoda_color": "зеленый",
+   "target": "olive_harrington_run(no_hex)",
+   "verdict": "borderline",
+   "note": "sage green — lighter/cooler than olive",
+   "url": "https://www.lamoda.ru/p/rtlaez292001/"
+  },
+  {
+   "sku": "MP002XM0DSLL",
+   "brand": "Mustang",
+   "lamoda_color": "зеленый",
+   "target": "olive_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "true olive",
+   "url": "https://www.lamoda.ru/p/mp002xm0dsll/"
+  },
+  {
+   "sku": "MP002XM02BNQ",
+   "brand": "Tom Tailor",
+   "lamoda_color": "хаки",
+   "target": "olive_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "olive-khaki",
+   "url": "https://www.lamoda.ru/p/mp002xm02bnq/"
+  },
+  {
+   "sku": "MP002XM12KKO",
+   "brand": "Marc O'Polo",
+   "lamoda_color": "зеленый",
+   "target": "olive_harrington_run(no_hex)",
+   "verdict": "borderline",
+   "note": "darker bottle-olive green",
+   "url": "https://www.lamoda.ru/p/mp002xm12kko/"
+  },
+  {
+   "sku": "RTLAFK100901",
+   "brand": "Calvin Klein Jeans",
+   "lamoda_color": "зеленый",
+   "target": "olive_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "khaki-olive",
+   "url": "https://www.lamoda.ru/p/rtlafk100901/"
+  },
+  {
+   "sku": "MP002XM02BNJ",
+   "brand": "Tom Tailor",
+   "lamoda_color": "хаки",
+   "target": "olive_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "light olive",
+   "url": "https://www.lamoda.ru/p/mp002xm02bnj/"
+  },
+  {
+   "sku": "RTLAFK206001",
+   "brand": "Billabong",
+   "lamoda_color": "зеленый",
+   "target": "olive_harrington_run(no_hex)",
+   "verdict": "reject",
+   "note": "mint/sage, too light",
+   "url": "https://www.lamoda.ru/p/rtlafk206001/"
+  },
+  {
+   "sku": "MP002XM0RRD0",
+   "brand": "s.Oliver",
+   "lamoda_color": "хаки",
+   "target": "olive_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "olive-khaki",
+   "url": "https://www.lamoda.ru/p/mp002xm0rrd0/"
+  },
+  {
+   "sku": "RTLAFN052001",
+   "brand": "Calvin Klein Jeans",
+   "lamoda_color": "хаки",
+   "target": "olive_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "olive-khaki",
+   "url": "https://www.lamoda.ru/p/rtlafn052001/"
+  },
+  {
+   "sku": "RTLAFC116601",
+   "brand": "Geox",
+   "lamoda_color": "хаки",
+   "target": "olive_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "olive",
+   "url": "https://www.lamoda.ru/p/rtlafc116601/"
+  },
+  {
+   "sku": "MP002XM22PKS",
+   "brand": "Tom Tailor",
+   "lamoda_color": "зеленый",
+   "target": "olive_harrington_run(no_hex)",
+   "verdict": "match",
+   "note": "olive-sage",
+   "url": "https://www.lamoda.ru/p/mp002xm22pks/"
+  },
+  {
+   "sku": "RTLAFO941001",
+   "brand": "Fred Perry",
+   "lamoda_color": "коричневый",
+   "target": "olive_harrington_run(no_hex)",
+   "verdict": "borderline",
+   "note": "labelled brown, photo olive-brown",
+   "url": "https://www.lamoda.ru/p/rtlafo941001/"
+  }
+ ]
+}
